@@ -28,7 +28,7 @@ def get_url()-> str:
   return "https://sparql.dblp.org/sparql"
 
 # write the query that need to be addressed
-def query_statement()-> Any:
+def query_statement(limit:int, offset:int)-> Any:
   query= """
   PREFIX datacite: <http://purl.org/spar/datacite/>
   PREFIX dblp: <https://dblp.org/rdf/schema#>
@@ -141,6 +141,8 @@ def query_statement()-> Any:
    }
   }
   GROUP BY ?editor
+  LIMIT {limit}
+  OFFSET {ofset}
   """
   return query
 
@@ -150,9 +152,20 @@ sparql.setReturnFormat(JSON)
 
 # return the query result in a json format
 def query_call()-> Any:
+  wikidata_author = list[Any]
+  offset: int = 0
+  limit: int = 1000000
   try:
-    ret = sparql.queryAndConvert()
-    return ret
+    while True:
+      sparql.setQuery(query_statement(limit,offset))
+      ret = sparql.queryAndConvert()
+      ret_data = ret['results']['bindings']
+      if not ret_data:
+        break
+      wikidata_author.extend(ret_data)
+      offset += limit
+    return wikidata_author
+    
   except Exception as e:
     logger.error("Error:",e)
 
