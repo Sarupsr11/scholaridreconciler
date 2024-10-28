@@ -1,6 +1,9 @@
 import logging
 from SPARQLWrapper import SPARQLWrapper, JSON # type:ignore
 from typing import Any
+from collections.abc import Callable
+
+
 # Create a logger
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -137,6 +140,47 @@ def query_statement()-> Any:
   GROUP BY ?editor
   """
   return query
+
+# define a sparql wrapper to query with an api
+sparql = SPARQLWrapper(get_url())
+sparql.setReturnFormat(JSON) 
+
+def query_call()-> Any:
+  try:
+    ret = sparql.queryAndConvert()
+    return ret
+  except Exception as e:
+    logger.error("Error:",e)
+
+def convert_to_dataframe(func: Callable[...,Any]) -> Any:
+  wikidata_author = func()
+  n = len(wikidata_author['results']['bindings'])
+  author_with_wikidata_id =
+  {
+    'name': [wikidata_author['results']['bindings'][i]['name']['value'] for i in range(n)],
+    'homepage': [wikidata_author['results']['bindings'][i]['homepage']['value'] for i in range(n)],
+    'affiliation': [wikidata_author['results']['bindings'][i]['affiliation']['value'] for i in range(n)],
+    'dblp': [wikidata_author['results']['bindings'][i]['dblp']['value'] for i in range(n)],
+    'wikidata': [wikidata_author['results']['bindings'][i]['wikidata']['value'] for i in range(n)],
+    'orcid': [wikidata_author['results']['bindings'][i]['orcid']['value'] for i in range(n)],
+    'googleScholar': [wikidata_author['results']['bindings'][i]['googleScholar']['value'] for i in range(n)],
+    'acm': [wikidata_author['results']['bindings'][i]['acm']['value'] for i in range(n)],
+    'github': [wikidata_author['results']['bindings'][i]['github']['value'] for i in range(n)],
+    'viaf': [wikidata_author['results']['bindings'][i]['viaf']['value'] for i in range(n)],
+    'scigraph': [wikidata_author['results']['bindings'][i]['scigraph']['value'] for i in range(n)],
+    'zbmath': [wikidata_author['results']['bindings'][i]['zbmath']['value'] for i in range(n)],
+    'researchGate': [wikidata_author['results']['bindings'][i]['researchGate']['value'] for i in range(n)]
+  }
+
+  author_with_wikidata_id_df = pd.DataFrame(author_with_wikidata_id)
+  return author_with_wikidata_id_df
+
+Dataframe_id = convert_to_dataframe(query_call())
+
+  
+
+
+    
 
   
   
