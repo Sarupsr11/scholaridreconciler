@@ -5,10 +5,10 @@ build-backend = "hatchling.build"
 [project]
 name = "ScholarIdReconciler"
 authors = [
-    {name = "Tim Holzheim", email = "tim.holzheim@rwth-aachen.de"},
+    {name = "Sarup Hussain", email = "saruphussain11@gmail.com"},
 ]
 maintainers = [
-    {name = "Tim Holzheim", email = "tim.holzheim@rwth-aachen.de"},
+    {name = "Sarup Hussain", email = "saruphussain11@gmail.com"},
 ]
 readme = "README.md"
 license= "Apache-2.0"
