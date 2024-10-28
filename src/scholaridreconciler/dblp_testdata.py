@@ -152,7 +152,7 @@ sparql.setReturnFormat(JSON)
 
 # return the query result in a json format
 def query_call()-> Any:
-  wikidata_author = list[Any]
+  wikidata_author: list = []
   offset: int = 0
   limit: int = 1000000
   try:
