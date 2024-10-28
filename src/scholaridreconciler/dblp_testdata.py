@@ -22,9 +22,11 @@ file_handler.setFormatter(formatter)
 # Add the handler to the logger
 logger.addHandler(file_handler)
 
+# get the endpoint_url from wikidata sparql api
 def get_url()-> str:
   return "https://sparql.dblp.org/sparql"
 
+# write the query that need to be addressed
 def query_statement()-> Any:
   query= """
   PREFIX datacite: <http://purl.org/spar/datacite/>
@@ -145,6 +147,7 @@ def query_statement()-> Any:
 sparql = SPARQLWrapper(get_url())
 sparql.setReturnFormat(JSON) 
 
+# return the query result in a json format
 def query_call()-> Any:
   try:
     ret = sparql.queryAndConvert()
@@ -152,6 +155,7 @@ def query_call()-> Any:
   except Exception as e:
     logger.error("Error:",e)
 
+# convert the return result into a dataframe
 def convert_to_dataframe(func: Callable[...,Any]) -> Any:
   wikidata_author = func()
   n = len(wikidata_author['results']['bindings'])
