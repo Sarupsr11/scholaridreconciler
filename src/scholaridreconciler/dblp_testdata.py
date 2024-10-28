@@ -193,6 +193,7 @@ def convert_to_dataframe(func: Callable[...,Any]) -> Any:
   return author_with_wikidata_id_df
 
 Dataframe_id = convert_to_dataframe(query_call())
+logger.info(Dataframe_id)
 
   
 
