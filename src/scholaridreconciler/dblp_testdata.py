@@ -159,8 +159,7 @@ def query_call()-> Any:
 def convert_to_dataframe(func: Callable[...,Any]) -> Any:
   wikidata_author = func()
   n = len(wikidata_author['results']['bindings'])
-  author_with_wikidata_id =
-  {
+  author_with_wikidata_id ={
     'name': [wikidata_author['results']['bindings'][i]['name']['value'] for i in range(n)],
     'homepage': [wikidata_author['results']['bindings'][i]['homepage']['value'] for i in range(n)],
     'affiliation': [wikidata_author['results']['bindings'][i]['affiliation']['value'] for i in range(n)],
