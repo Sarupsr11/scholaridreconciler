@@ -22,7 +22,6 @@ dependencies = [
     "graphviz",
     "rdflib",
     "typing",
-    "collections.abc"
 
 ]
 
