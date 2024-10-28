@@ -1,8 +1,9 @@
 import logging
 from SPARQLWrapper import SPARQLWrapper, JSON # type:ignore
+from typing import Any
 # Create a logger
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEDUG)
+logger.setLevel(logging.DEBUG)
 
 # Remove any existing handlers
 logger.handlers.clear()
@@ -13,7 +14,7 @@ file_handler.setLevel(logging.DEBUG)
 
 # Create a formattter and det it for the handler
 formatter = logging.Formatter("%(asctime)s-%(levelname)s - %(message)s")
-filehandler.setFormatter(formatter)
+file_handler.setFormatter(formatter)
 
 # Add the handler to the logger
 logger.addHandler(file_handler)
@@ -21,7 +22,7 @@ logger.addHandler(file_handler)
 def get_url()-> str:
   return "https://sparql.dblp.org/sparql"
 
-def query_statement()-> any:
+def query_statement()-> Any:
   query= """
   PREFIX datacite: <http://purl.org/spar/datacite/>
   PREFIX dblp: <https://dblp.org/rdf/schema#>
