@@ -69,10 +69,17 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage.xml
           path: coverage.xml
+
+      - name: upload print results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app.log
+          path: src/scholaridreconciler/models/app.log
 
   lint:
     runs-on: ubuntu-latest
