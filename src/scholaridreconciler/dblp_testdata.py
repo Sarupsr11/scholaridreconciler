@@ -1,5 +1,5 @@
 import logging
-from sparqlwrapper import SPARQLWrapper, JSON # type:ignore
+from SPARQLWrapper import SPARQLWrapper, JSON # type:ignore
 from typing import Any
 from collections.abc import Callable
 import pandas as pd
