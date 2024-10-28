@@ -65,6 +65,12 @@ jobs:
       - name: Install SPARQLWrapper
         run: pip install SPARQLWrapper
 
+      - name: Verify installation
+        run: |
+          python -m pip show pandas  # Check if pandas is installed
+          pip list  # List all installed packages
+
+
       - name: Run tests with Tox
         run: |
           source venv/bin/activate
