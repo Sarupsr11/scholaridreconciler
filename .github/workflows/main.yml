@@ -175,6 +175,7 @@ jobs:
 
   commit-check:
     name: Validate Commit Messages
+    needs: test
     runs-on: ubuntu-latest
 
     steps:
