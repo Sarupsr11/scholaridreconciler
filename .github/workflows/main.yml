@@ -172,3 +172,59 @@ jobs:
         run: |
           source venv/bin/activate
           tox -e type
+
+  commit-check:
+    commit-message-check:
+    name: Validate Commit Messages
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for all branches and tags
+
+      # Step 2: Install Git (if not already available)
+      - name: Install Git
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git
+
+      # Step 3: Validate Commit Messages
+      - name: Validate Commit Messages
+        id: commit_validation
+        run: |
+          echo "Validating commit messages..."
+
+          # Define allowed commit message patterns
+          COMMIT_PATTERN="^[Ii]initial\scommit$|^(build|ci|docs|feat|fix|perf|refactor|style|test|revert):\s.+$|^Revert\s.+$|^Add\s(LICENSE|CHANGELOG)$|^updated python version for CI$|^Merge\sbranch\s.+$"
+
+          # Get all commit messages in the push
+          COMMITS=$(git log --pretty=%s origin/main..HEAD --no-merges)
+
+          # Initialize failure flag
+          FAIL=0
+
+          # Iterate over each commit message
+          while IFS= read -r COMMIT; do
+              # Check if commit message matches the pattern
+              if ! [[ "$COMMIT" =~ $COMMIT_PATTERN ]]; then
+                  echo " Invalid commit message: '$COMMIT'"
+                  FAIL=1
+              fi
+
+              # Check if commit message length exceeds 100 characters
+              COMMIT_LENGTH=${#COMMIT}
+              if [[ "$COMMIT_LENGTH" -gt 100 ]]; then
+                  echo " Commit message too long ($COMMIT_LENGTH characters): '$COMMIT'"
+                  FAIL=1
+              fi
+          done <<< "$COMMITS"
+
+          if [[ "$FAIL" -eq 1 ]]; then
+              echo "❗ Commit message validation failed."
+              exit 1
+          else
+              echo "✅ All commit messages are valid."
+          fi
