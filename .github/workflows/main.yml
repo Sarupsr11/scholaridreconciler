@@ -174,7 +174,6 @@ jobs:
           tox -e type
 
   commit-check:
-    commit-message-check:
     name: Validate Commit Messages
     runs-on: ubuntu-latest
 
