@@ -199,7 +199,7 @@ jobs:
           echo "Validating commit messages..."
           
           # Get all commit messages in the push
-          COMMITS=$(git log --pretty=%s --no-merges --reverse)
+          COMMITS=$(git log --pretty=%s origin/main..HEAD --no-merges --reverse)
       
           # Define commit message pattern
           COMMIT_PATTERN="^[Ii]nitial\scommit$|^(build|ci|docs|feat|fix|perf|refactor|style|test|revert):\s.+$|^Revert\s.+$|^Add\s(LICENSE|CHANGELOG)$|^updated python version for CI$|^Merge\sbranch\s.+$"
