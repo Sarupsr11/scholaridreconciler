@@ -194,6 +194,7 @@ jobs:
       # Step 3: Validate Commit Messages
       - name: Validate Commit Messages
         id: commit_validation
+        if: ${{ github.event_name == 'push' }}
         run: |
           - echo "Validating commit messages..."
           - |
@@ -213,4 +214,4 @@ jobs:
                 fi
             done
             unset IFS
-        if: '$CI_PIPELINE_SOURCE == "push"'
+       
