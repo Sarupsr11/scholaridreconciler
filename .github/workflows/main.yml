@@ -196,22 +196,38 @@ jobs:
         id: commit_validation
         if: ${{ github.event_name == 'push' }}
         run: |
-          - echo "Validating commit messages..."
-          - |
-            COMMITS=$(git log --pretty=%s --no-merges --reverse)
-            IFS=$'\n'
-            COMMIT_PATTERN="^[Ii]nitial\scommit$|^(build|ci|docs|feat|fix|perf|refactor|style|test|revert):\s.+$|^Revert\s.+$|^Add\s(LICENSE|CHANGELOG)$|^updated python version for CI$|^Merge\sbranch\s.+$"
-
-            for COMMIT in $COMMITS; do
-                if ! [[ "$COMMIT" =~ $COMMIT_PATTERN ]]; then
-                    echo "Invalid commit message: $COMMIT"
-                    exit 1
-                fi
+          echo "Validating commit messages..."
+          
+          # Get all commit messages in the push
+          COMMITS=$(git log --pretty=%s origin/main..HEAD --no-merges --reverse)
       
-                if [[ ${#COMMIT} -gt 100 ]]; then
-                  echo "Commit message too long (more than 100 characters): $COMMIT"
-                  exit 1
-                fi
-            done
-            unset IFS
-       
+          # Define commit message pattern
+          COMMIT_PATTERN="^[Ii]nitial\scommit$|^(build|ci|docs|feat|fix|perf|refactor|style|test|revert):\s.+$|^Revert\s.+$|^Add\s(LICENSE|CHANGELOG)$|^updated python version for CI$|^Merge\sbranch\s.+$"
+          
+          # Initialize failure flag
+          FAIL=0
+          
+          # Iterate over each commit message
+          while IFS= read -r COMMIT; do
+            # Check if commit message matches the pattern
+            if ! [[ "$COMMIT" =~ $COMMIT_PATTERN ]]; then
+              echo "Invalid commit message: '$COMMIT'"
+              FAIL=1
+            fi
+      
+            # Check if commit message length exceeds 100 characters
+            COMMIT_LENGTH=${#COMMIT}
+            if [[ "$COMMIT_LENGTH" -gt 100 ]]; then
+              echo "Commit message too long ($COMMIT_LENGTH characters): '$COMMIT'"
+              FAIL=1
+            fi
+          done <<< "$COMMITS"
+          
+          # If any failures were found, exit with error code
+          if [[ "$FAIL" -eq 1 ]]; then
+            echo "❗ Commit message validation failed."
+            exit 1
+          else
+            echo "✅ All commit messages are valid."
+          fi
+      
