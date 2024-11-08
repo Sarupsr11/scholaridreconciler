@@ -50,11 +50,6 @@ jobs:
         with:
           name: coverage.xml
           path: coverage.xml
-
-      - name: Run a python file
-        run: |
-          source venv/bin/activate
-          python src/scholaridreconciler/dblp_testdata.py
     
       - name: upload print results
         if: always()
