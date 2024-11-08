@@ -27,7 +27,9 @@ jobs:
           pip install .[test]
 
     - name: Run data retrieval script
-      run: python src/scholaridreconciler/retrieve_data.py
+      run: | 
+          source venv/bin/activate
+          python src/scholaridreconciler/retrieve_data.py
 
     - name: Commit and push changes
       run: |
