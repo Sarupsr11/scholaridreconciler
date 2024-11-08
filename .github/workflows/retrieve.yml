@@ -27,13 +27,14 @@ jobs:
           pip install .[test]
 
     - name: Run data retrieval script
+      path: src/scholaridreconciler
       run: python retrieve_data.py
 
     - name: Commit and push changes
       run: |
         git config --local user.name "github-actions[bot]"
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
-        git add data.json
+        git add Dataframe_id.csv
         git commit -m "ci: Update dataframe_id with latest data"
         git push
       env:
