@@ -19,5 +19,8 @@ class Scholar(BaseModel):
     name: str | None = None
     affiliation_raw: str | None = None
     affiliation: Affiliation | None = None
-
+    dblp_id: str | None = None
+    googleScholar_id: str | None = None
+    orcid_id: str | None = None
+    mathGenealogy_id: str | None = None
 
