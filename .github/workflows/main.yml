@@ -259,14 +259,26 @@ jobs:
         run: |
           source venv/bin/activate
           python src/scholaridreconciler/retrieve_data.py
+          python src/scholaridreconciler/services/organisation_data.py
 
-      - name: Commit and push changes
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+      - name: Commit changes to download
         run: |
+          git checkout -B update-organisation-data
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add organisation_data.csv
+          git commit -m "ci: Update organisation_data with latest data"
+          git push origin update-organisation-data
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit changes on schedule
+        run: |
+          git checkout -B update-dataframe-id
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git add Dataframe_id.csv
           git commit -m "ci: Update dataframe_id with latest data"
-          git push
+          git push origin update-dataframe-id
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
