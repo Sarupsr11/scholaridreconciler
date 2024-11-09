@@ -107,7 +107,7 @@ def retrieve_possible_organisation(endpoint:str,LIMIT:int, OFFSET:int):
         logging.info(f"JSON decode error: {e}")
         return None
 
-def concurrent_run(WIKIDATA_SPARQL_ENDPOINT:str) -> dict[str, Any]:
+def concurrent_run(WIKIDATA_SPARQL_ENDPOINT:str) -> list[Any]:
     limit = 100000
     offset = 0
     organisation_json_data = []
@@ -121,7 +121,7 @@ def concurrent_run(WIKIDATA_SPARQL_ENDPOINT:str) -> dict[str, Any]:
         offset += limit
     return organisation_json_data
 
-def convert_to_dataframe(organisation: Callable[[str],dict[str,Any]]) -> pd.DataFrame:
+def convert_to_dataframe(organisation: list[Any]) -> pd.DataFrame:
     n = len(organisation)
     organisation_dict = {
         'uri': [organisation[i]['nameuri']['value'] for i in range(n)],
@@ -129,7 +129,7 @@ def convert_to_dataframe(organisation: Callable[[str],dict[str,Any]]) -> pd.Data
     }   
     return pd.DataFrame(organisation_dict)
 
-def save_csv_file(organisation_dataframe: Callable[[Callable[[str],dict[str,Any]]],pd.DataFrame])-> None:
+def save_csv_file(organisation_dataframe: pd.DataFrame)-> None:
     organisation_dataframe.to_csv("organisation_data.csv",index=False)
 
 
