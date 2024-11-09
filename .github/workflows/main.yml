@@ -276,7 +276,7 @@ jobs:
           git commit -m "feat: update data with latest data"
           git push origin HEAD:${{ github.head_ref }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
           
       
