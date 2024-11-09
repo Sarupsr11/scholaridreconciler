@@ -263,26 +263,20 @@ jobs:
           python src/scholaridreconciler/retrieve_data.py
           python src/scholaridreconciler/services/organisation_data.py
 
-      - name: Configure Git for commit
+      - name: Force Mark Files as Modified (if necessary)
         run: |
-          # Configure Git with GitHub Actions bot info
+          touch organisation_data.csv
+          touch Dataframe_id.csv
+  
+      - name: Commit and Push Changes
+        run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Commit changes to current branch
-        run: |
-          git add organisation_data.csv
-          git commit -m "feat: update organisation_data with latest data"
-          git add Dataframe_id.csv
-          git commit -m "feat: update dataframe_data with latest data"
-    
-        
-      - name: Push changes to the same branch
+          git add organisation_data.csv Dataframe_id.csv
+          git commit -m "feat: update data with latest data"
+          git push origin HEAD:${{ github.head_ref }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Force push to ensure changes go to the current branch
-          git push origin HEAD:${{ github.ref_name }}
-      
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }
+        
           
       
