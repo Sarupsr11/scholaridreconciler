@@ -4,11 +4,7 @@ from typing import Any
 from collections.abc import Callable
 import pandas as pd
 import requests
-import requests_cache
-import concurrent.futures
-import asyncio
-import json
-from functools import lru_cache
+
 
 WIKIDATA_SPARQL_ENDPOINT = "https://qlever.cs.uni-freiburg.de/api/wikidata" 
 
