@@ -259,7 +259,7 @@ jobs:
         run: |
           source venv/bin/activate
           python src/scholaridreconciler/retrieve_data.py
-          python src/scholaridreconciler/services/organsiation_data.py
+          python src/scholaridreconciler/services/organisation_data.py
 
       - name: Commit and push changes
         if: github.event_name == 'push'
