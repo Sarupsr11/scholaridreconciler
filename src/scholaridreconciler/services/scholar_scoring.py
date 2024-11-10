@@ -1,10 +1,10 @@
-import pandas as pd
+
 from scholar_affiliation import convert_to_dataframe
 from scholaridreconciler.models.scholar import Scholar
 from rapidfuzz import fuzz, process
 
 
-def scoring(scholar:Scholar | None = None):
+def scoring(scholar:Scholar):
     fname = scholar.first_name.lower()
     lname = scholar.family_name.lower()
     name = scholar.name.lower()

@@ -1,7 +1,5 @@
 import logging
 from SPARQLWrapper import SPARQLWrapper, JSON # type:ignore
-from typing import Any
-from collections.abc import Callable
 import pandas as pd
 from scholaridreconciler.models.scholar import Scholar
 from organisation_check import top_10_organisation
@@ -12,7 +10,7 @@ WIKIDATA_SPARQL_ENDPOINT = "https://qlever.cs.uni-freiburg.de/api/wikidata"
 # scholar = Scholar(name="Stefan Decker", affiliation_raw="RWTH Aachen University")
 
 
-def scholar_retrieve(scholar:Scholar| None = None):
+def scholar_retrieve(scholar:Scholar):
     score_dict = top_10_organisation(scholar)
     aff = list(score_dict.keys())
     
@@ -72,7 +70,7 @@ def scholar_retrieve(scholar:Scholar| None = None):
     except Exception as e:
         logging.info(f"JSON decode error: {e}")
 
-def convert_to_dataframe(scholar:Scholar | None = None) :
+def convert_to_dataframe(scholar:Scholar) :
     # Prepare lists for each column, with error handling for missing fields
 
 
