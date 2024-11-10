@@ -89,4 +89,4 @@ def convert_to_dataframe(scholar:Scholar) :
     }
     return pd.DataFrame(scholar_dict)
 
-# print(convert_to_dataframe(scholar_retrieve(scholar,score_dict),score_dict).info())
+# print(convert_to_dataframe(scholar_retrieve(scholar)).info())

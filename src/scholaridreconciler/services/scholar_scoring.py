@@ -20,7 +20,7 @@ def scoring(scholar:Scholar):
     
 
 
-# scholar = Scholar(first_name="Josef",family_name="Decker", name="S. Decker", affiliation_raw="RWTH Aachen University")
-# scoring(scholar)
+scholar = Scholar(first_name="Josef",family_name="Decker", name="S. Decker", affiliation_raw="RWTH Aachen University")
+scoring(scholar)
 
 

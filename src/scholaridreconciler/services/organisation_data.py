@@ -126,7 +126,7 @@ def convert_to_dataframe(organisation: list[Any]) -> pd.DataFrame:
     return pd.DataFrame(organisation_dict)
 
 def save_csv_file(organisation_dataframe: pd.DataFrame)-> None:
-    organisation_dataframe.to_csv("organisation_data.csv",index=False)
+    organisation_dataframe.to_csv("src/scholaridreconciler/services/organisation_data.csv",index=False)
 
 
 
