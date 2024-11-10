@@ -8,7 +8,7 @@ def scoring(scholar:Scholar):
     fname = scholar.first_name.lower()
     lname = scholar.family_name.lower()
     name = scholar.name.lower()
-    affiliation = scholar.affiliation_raw.lower()
+    # affiliation = scholar.affiliation_raw.lower()
 
     scholar_df = convert_to_dataframe(scholar)
     scholar_df['name_score'] = scholar_df['Label'].apply(lambda x: process.extract(x,[name],scorer = fuzz.WRatio)[0][1])
