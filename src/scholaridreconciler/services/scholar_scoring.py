@@ -4,7 +4,7 @@ from scholaridreconciler.models.scholar import Scholar
 from rapidfuzz import fuzz, process
 
 
-def scoring(scholar:Scholar):
+def scoring(scholar:Scholar | None = None):
     fname = scholar.first_name.lower()
     lname = scholar.family_name.lower()
     name = scholar.name.lower()

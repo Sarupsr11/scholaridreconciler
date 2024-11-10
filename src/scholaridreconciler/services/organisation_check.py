@@ -6,7 +6,7 @@ from scholaridreconciler.models.scholar import Scholar
 organisation_df = pd.read_csv("organisation_data.csv")
 
 
-def top_10_organisation(scholar:Scholar):
+def top_10_organisation(scholar:Scholar | None = None):
     affiliation_index: dict[any,any] = {}
 
     matches_affiliation = process.extract(scholar.affiliation_raw.lower(), organisation_df.org.unique(), scorer=fuzz.WRatio, limit = 10 )
