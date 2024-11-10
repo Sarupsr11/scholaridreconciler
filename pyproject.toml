@@ -23,7 +23,8 @@ dependencies = [
     "rdflib",
     "typing",
     "SPARQLWrapper",
-    "pandas"
+    "pandas",
+    "rapidfuzz",
 
 ]
 

@@ -15,7 +15,7 @@ def retrieve_possible_organisation(endpoint:str,LIMIT:int, OFFSET:int):
     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
     PREFIX wd: <http://www.wikidata.org/entity/>
     PREFIX wdt: <http://www.wikidata.org/prop/direct/>
-    SELECT DISTINCT ?nameuri ?nameLabel ?countryLabel WHERE 
+    SELECT DISTINCT ?nameuri (LCASE(?nameLabel) AS ?nameVar) WHERE 
     {{
     {{
         ?name wdt:P31/wdt:P279* wd:Q3918 .
@@ -87,7 +87,7 @@ def retrieve_possible_organisation(endpoint:str,LIMIT:int, OFFSET:int):
         ?name rdfs:label ?nameLabel .
     }}
     FILTER (LANG(?nameLabel) = "en") .
-    BIND(STRAFTER(STR(?name), "http://www.wikidata.org/entity/") AS ?nameuri)
+    BIND(STRAFTER(STR(?name), "http://www.wikidata.org/entity/") AS ?nameuri).
     }}
     LIMIT {LIMIT}
     OFFSET {OFFSET}
@@ -121,7 +121,7 @@ def convert_to_dataframe(organisation: list[Any]) -> pd.DataFrame:
     n = len(organisation)
     organisation_dict = {
         'uri': [organisation[i]['nameuri']['value'] for i in range(n)],
-        'org': [organisation[i]['nameLabel']['value'] for i in range(n)],
+        'org': [organisation[i]['nameVar']['value'] for i in range(n)],
     }   
     return pd.DataFrame(organisation_dict)
 
