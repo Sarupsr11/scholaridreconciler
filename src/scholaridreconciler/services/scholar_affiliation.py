@@ -9,10 +9,10 @@ from organisation_check import top_10_organisation
 WIKIDATA_SPARQL_ENDPOINT = "https://qlever.cs.uni-freiburg.de/api/wikidata" 
 
 
-scholar = Scholar(name="Stefan Decker", affiliation_raw="RWTH Aachen University")
+# scholar = Scholar(name="Stefan Decker", affiliation_raw="RWTH Aachen University")
 
 
-def scholar_retrieve(scholar:Scholar):
+def scholar_retrieve(scholar:Scholar| None = None):
     score_dict = top_10_organisation(scholar)
     aff = list(score_dict.keys())
     
@@ -72,7 +72,7 @@ def scholar_retrieve(scholar:Scholar):
     except Exception as e:
         logging.info(f"JSON decode error: {e}")
 
-def convert_to_dataframe(scholar:Scholar | None = None) -> pd.DataFrame|None:
+def convert_to_dataframe(scholar:Scholar | None = None) -> pd.DataFrame| None :
     # Prepare lists for each column, with error handling for missing fields
 
 
