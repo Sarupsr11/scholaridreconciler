@@ -72,7 +72,7 @@ def scholar_retrieve(scholar:Scholar| None = None):
     except Exception as e:
         logging.info(f"JSON decode error: {e}")
 
-def convert_to_dataframe(scholar:Scholar | None = None) -> pd.DataFrame| None :
+def convert_to_dataframe(scholar:Scholar | None = None) :
     # Prepare lists for each column, with error handling for missing fields
 
 
