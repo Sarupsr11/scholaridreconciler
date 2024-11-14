@@ -25,6 +25,9 @@ dependencies = [
     "SPARQLWrapper",
     "pandas",
     "rapidfuzz",
+    "nltk",
+    "numpy",
+    "spacy"
 
 ]
 

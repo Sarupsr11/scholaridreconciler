@@ -1,8 +1,10 @@
 import logging
-from SPARQLWrapper import SPARQLWrapper, JSON # type:ignore
+
 import pandas as pd
-from scholaridreconciler.models.scholar import Scholar
 from organisation_check import top_10_organisation
+from SPARQLWrapper import JSON, SPARQLWrapper  # type:ignore
+
+from scholaridreconciler.models.scholar import Scholar
 
 WIKIDATA_SPARQL_ENDPOINT = "https://qlever.cs.uni-freiburg.de/api/wikidata" 
 

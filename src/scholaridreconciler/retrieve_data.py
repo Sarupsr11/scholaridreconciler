@@ -1,9 +1,9 @@
 import logging
-from SPARQLWrapper import SPARQLWrapper, JSON # type:ignore
-from typing import Any
 from collections.abc import Callable
-import pandas as pd
+from typing import Any
 
+import pandas as pd
+from SPARQLWrapper import JSON, SPARQLWrapper  # type:ignore
 
 # Create a logger
 logger = logging.getLogger(__name__)
