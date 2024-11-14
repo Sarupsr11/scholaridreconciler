@@ -261,7 +261,6 @@ jobs:
       - name: Run data retrieval script
         run: |
           source venv/bin/activate
-          python src/scholaridreconciler/retrieve_data.py
           python src/scholaridreconciler/services/organisation_data.py
 
 
