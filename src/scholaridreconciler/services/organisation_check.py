@@ -1,8 +1,9 @@
 import sqlite3
+from typing import Any
 
 import pandas as pd
 from rapidfuzz import fuzz, process
-from typing import Any
+
 from scholaridreconciler.models.scholar import Scholar
 from scholaridreconciler.services.countries_stopwords import countries_wikidata, stopwords
 
