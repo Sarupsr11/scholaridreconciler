@@ -24,8 +24,8 @@ def retrieve_possible_organisation(endpoint: str, limit: int, offset: int) -> li
     SELECT DISTINCT ?nameuri (LCASE(?nameLabel) AS ?nameVar) ?countryuri WHERE {{
       VALUES ?affiliation_type {{ 
 	wd:Q3918 wd:Q38723 wd:Q31855 wd:Q16917 wd:Q327333 wd:Q484652 
-    wd:Q4830453 wd:Q163740 wd:3914 wd:Q7075 wd:Q380962 wd:Q32053225 wd:Q112872396 wd:Q875538
-	wd: 43229 wd:2085381  wd:Q2385804  wd:Q294163 wd:Q245065 wd:Q157031 
+    wd:Q4830453 wd:Q163740 wd:Q3914 wd:Q7075 wd:Q380962 wd:Q32053225 wd:Q112872396 wd:Q875538
+	 wd:Q2085381  wd:Q2385804  wd:Q294163 wd:Q245065 wd:Q157031 
     wd:Q1194093 wd:Q891723 wd:Q4287745 wd:Q748019 wd:Q155271 wd:Q1391145 wd:Q955824 
     wd:Q197952 wd:Q161726 wd:Q1785733 wd:Q708676 wd:Q336473
       }}
