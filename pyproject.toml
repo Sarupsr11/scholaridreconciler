@@ -26,8 +26,8 @@ dependencies = [
     "pandas",
     "rapidfuzz",
     "nltk",
-    "numpy",
-    "spacy"
+    "numpy==1.26.4",
+    "spacy==3.8.0",
 
 ]
 

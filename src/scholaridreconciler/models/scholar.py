@@ -1,5 +1,6 @@
-from pydantic import BaseModel, PrivateAttr, ConfigDict
-from typing import Optional
+
+from pydantic import BaseModel
+
 
 class Affiliation(BaseModel):
     """
@@ -15,15 +16,15 @@ class Scholar(BaseModel):
     a scholar
     """
     
-    first_name: Optional[str]  = None 
-    family_name: Optional[str]  = None
-    name: Optional[str]  = None
-    affiliation_raw: Optional[str]  = None
-    dblp_id: Optional[str]  = None
-    googleScholar_id: Optional[str]  = None
-    orcid_id: Optional[str]  = None
-    mathGenealogy_id: Optional[str]  = None
-    affiliation: Optional[Affiliation]  = None
+    first_name: str | None  = None 
+    family_name: str | None  = None
+    name: str | None  = None
+    affiliation_raw: str | None  = None
+    dblp_id: str | None  = None
+    googleScholar_id: str | None  = None
+    orcid_id: str | None  = None
+    mathGenealogy_id: str | None  = None
+    affiliation: Affiliation | None  = None
     class Config:
         extra = "allow"
     

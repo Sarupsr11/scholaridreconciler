@@ -3,8 +3,9 @@ import sqlite3
 from typing import Any
 
 import pandas as pd
-from organsiation_preprocessing import preprocess_organisation
 from SPARQLWrapper import JSON, SPARQLWrapper
+
+from scholaridreconciler.services.organsiation_preprocessing import preprocess_organisation
 
 """
 This script retrieves organization names and their Wikidata IDs based on specified types

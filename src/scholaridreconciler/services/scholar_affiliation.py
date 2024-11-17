@@ -1,10 +1,10 @@
 import logging
 
 import pandas as pd
-from organisation_check import top_10_organisation
 from SPARQLWrapper import JSON, SPARQLWrapper  # type:ignore
 
 from scholaridreconciler.models.scholar import Scholar
+from scholaridreconciler.services.organisation_check import top_organisation
 
 WIKIDATA_SPARQL_ENDPOINT = "https://qlever.cs.uni-freiburg.de/api/wikidata" 
 
@@ -13,8 +13,8 @@ WIKIDATA_SPARQL_ENDPOINT = "https://qlever.cs.uni-freiburg.de/api/wikidata"
 
 
 def scholar_retrieve(scholar:Scholar):
-    score_dict = top_10_organisation(scholar)
-    aff = list(score_dict.keys())
+    score_dict = top_organisation(scholar)
+    aff = score_dict
     
     aff_values = " ".join(f"wd:{id}" for id in aff)
     query = f"""
@@ -70,25 +70,28 @@ def scholar_retrieve(scholar:Scholar):
         response = sparql.queryAndConvert()
         return response.get('results', {}).get('bindings', [])
     except Exception as e:
-        logging.info(f"JSON decode error: {e}")
+        logging.info(f"Retrieval Error: {e}")
 
 def convert_to_dataframe(scholar:Scholar) :
     # Prepare lists for each column, with error handling for missing fields
 
 
-    score_dict = top_10_organisation(scholar)
+    score_dict = top_organisation(scholar)
     scholar_list = scholar_retrieve(scholar)
-    n = len(scholar_list)
-    scholar_dict = {
-        'nameuri': [scholar_list[i].get('nameuri', {}).get('value', '') for i in range(n)],
-        'Label': [scholar_list[i].get('nameVar', {}).get('value', '') for i in range(n)],
-        'first_name': [scholar_list[i].get('fname', {}).get('value', '') for i in range(n)],
-        'last_name': [scholar_list[i].get('lname', {}).get('value', '') for i in range(n)],
-        'affiliation': [scholar_list[i].get('org', {}).get('value', '') for i in range(n)],
-        'affiliation_score': [
-            score_dict.get(scholar_list[i].get('affuri', {}).get('value'), 0) for i in range(n)
-        ]
-    }
-    return pd.DataFrame(scholar_dict)
+    if scholar_list is not None:
+        n = len(scholar_list)
+        scholar_dict = {
+            'nameuri': [scholar_list[i].get('nameuri', {}).get('value', '') for i in range(n)],
+            'Label': [scholar_list[i].get('nameVar', {}).get('value', '') for i in range(n)],
+            'first_name': [scholar_list[i].get('fname', {}).get('value', '') for i in range(n)],
+            'last_name': [scholar_list[i].get('lname', {}).get('value', '') for i in range(n)],
+            'affiliation': [scholar_list[i].get('org', {}).get('value', '') for i in range(n)],
+            'affiliation_score': [
+                score_dict.get(scholar_list[i].get('affuri', {}).get('value'), 0) for i in range(n)
+            ]
+        }
+        return pd.DataFrame(scholar_dict)
+    else:
+        return pd.DataFrame({})
 
 # print(convert_to_dataframe(scholar_retrieve(scholar)).info())
