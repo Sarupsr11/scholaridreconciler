@@ -21,7 +21,7 @@ def wiki_search_by_ids(scholar:Scholar):
                 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
                 PREFIX wd: <http://www.wikidata.org/entity/>
                 PREFIX wdt: <http://www.wikidata.org/prop/direct/>
-                SELECT ?person
+                SELECT ?uri
                 WHERE
                 {{ 
                      VALUES (?dblp ?googlescholar ?orcid ?mathGenealogy) 
@@ -34,9 +34,9 @@ def wiki_search_by_ids(scholar:Scholar):
 					{{?person wdt:P1960 ?googlescholar.}}
 					union
 					{{?person wdt:P496 ?orcid.}}
+                    BIND (STRAFTER(STR(?person), "http://www.wikidata.org/entity/") AS ?uri).
                 }}
-                GROUP BY ?person
-
+                GROUP BY ?uri
             """
     sparql = SPARQLWrapper(WIKIDATA_SPARQL_ENDPOINT)
     sparql.setReturnFormat(JSON)
@@ -67,14 +67,16 @@ def dblp_search_by_ids(scholar:Scholar):
                 PREFIX dblp: <https://dblp.org/rdf/schema#>
                 PREFIX datacite: <http://purl.org/spar/datacite/>
                 PREFIX litre: <http://purl.org/spar/literal/>
-                SELECT ?person ?name ?aff ?dblp ?googleScholar ?orcid ?mathGenealogy 
+                SELECT distinct ?person ?name ?aff ?dblp ?googleScholar ?orcid ?mathGenealogy 
                 WHERE
                 {{ 
                      VALUES (?dblp ?googleScholar ?orcid ?mathGenealogy) 
                       {{ ("{dblp}" "{googleScholar}" "{orcid}" "{mathGenealogy}")}}
                     ?person rdf:type dblp:Person.
-                    ?person dblp:creatorname ?name.
+                    ?person dblp:primaryCreatorName ?name.
+                    optional{{
                     ?person dblp:affiliation ?aff.
+                    }}
                     {{
                     ?person datacite:hasIdentifier ?dblp_blank .
                     ?dblp_blank datacite:usesIdentifierScheme datacite:dblp ;
@@ -99,7 +101,7 @@ def dblp_search_by_ids(scholar:Scholar):
                                 litre:hasLiteralValue ?mathGenealogy.
                     }}
                 }}
-                GROUP BY ?person
+                GROUP BY ?person ?name ?aff ?dblp ?googleScholar ?orcid ?mathGenealogy 
 
             """
     sparql = SPARQLWrapper(DBLP_SPARQL_ENDPOINT)
@@ -165,10 +167,10 @@ def direct_name_affiliation_search(scholar:Scholar):
 
 
 
-scholar = Scholar(name="Stefan Decker", first_name="Josef", family_name="Decker",
-                  affiliation_raw="RWTH Aachen University",
-                  dblp_id="d/StefanDecker",orcid_id="0000-0001-6324-7164",
-                  googleScholar_id="uhVkSswAAAAJ",mathGenealogy_id="284760")
+# scholar = Scholar(name="Stefan Decker", first_name="Josef", family_name="Decker",
+#                   affiliation_raw="RWTH Aachen University",
+#                   dblp_id="d/StefanDecker",orcid_id="0000-0001-6324-7164",
+#                   googleScholar_id="uhVkSswAAAAJ",mathGenealogy_id="284760")
 
-print(direct_name_affiliation_search(scholar))
+# print(dblp_search_by_ids(scholar))
 
