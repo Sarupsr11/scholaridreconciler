@@ -58,8 +58,8 @@ def naive_scoring(scholar:Scholar):
     
 
 
-scholar = Scholar(name="Michael T. Schaub", 
-                  affiliation_raw="Rwth Aachen University")
-print(naive_scoring(scholar))
+# scholar = Scholar(name="Michael T. Schaub", 
+#                   affiliation_raw="Rwth Aachen University")
+# print(naive_scoring(scholar))
 
 
