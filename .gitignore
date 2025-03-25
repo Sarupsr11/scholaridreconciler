@@ -164,3 +164,6 @@ cython_debug/
 # cache database files
 .cache/
 *.db
+
+# cache vcode files
+.vscode/
