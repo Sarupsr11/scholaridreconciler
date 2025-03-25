@@ -1,0 +1,528 @@
+queries:
+    get_scholar_wiki_id:
+        description: "Retrieve scholar with the given attributes."
+        query_wiki_by_id: |
+                    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                    PREFIX wd: <http://www.wikidata.org/entity/>
+                    PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+                    PREFIX wikibase: <http://wikiba.se/ontology#>
+                    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+                    SELECT DISTINCT
+                        ?wiki_id 
+                        (GROUP_CONCAT(DISTINCT ?itemLabel; SEPARATOR='|') AS ?name)
+                        (GROUP_CONCAT(DISTINCT ?firstname; SEPARATOR='|') AS ?fname)
+                        (GROUP_CONCAT(DISTINCT ?lastname; SEPARATOR='|') AS ?lname)
+                        (GROUP_CONCAT(DISTINCT ?affname; SEPARATOR='|') AS ?affiliation)
+                        (GROUP_CONCAT(DISTINCT ?orcid; SEPARATOR=',') AS ?orcid_id)
+                        (GROUP_CONCAT(DISTINCT ?dblp; SEPARATOR=',') AS ?dblp_id)
+                        (GROUP_CONCAT(DISTINCT ?googleScholar; SEPARATOR=',') AS ?google_scholar_id)
+                        (GROUP_CONCAT(DISTINCT ?acm; SEPARATOR=',') AS ?acm_id)
+                        (GROUP_CONCAT(DISTINCT ?mathGenealogy; SEPARATOR=',') AS ?mathGenealogy_id)
+                        (GROUP_CONCAT(DISTINCT ?gnd; SEPARATOR=',') AS ?gnd_id)
+                        (GROUP_CONCAT(DISTINCT ?github; SEPARATOR=',') AS ?github_id)
+                        (GROUP_CONCAT(DISTINCT ?twitter; SEPARATOR=',') AS ?twitter_id)
+
+                    WHERE {{
+                        ?item wdt:P31 wd:Q5.  
+
+                        # Match scholar by various IDs
+                        {{
+                            {{ ?item wdt:P2456 "{scholar.dblp_id}". }} 
+                            UNION
+                            {{ ?item wdt:P496 "{scholar.orcid_id}". }} 
+                            UNION
+                            {{ ?item wdt:P1960 "{scholar.google_scholar_id}". }} 
+                            UNION
+                            {{ ?item wdt:P549 "{scholar.mathGenealogy}". }} 
+                            UNION
+                            {{ ?item wdt:P864 "{scholar.acm}". }} 
+                            UNION
+                            {{ ?item wdt:P227 "{scholar.gnd}". }} 
+                            UNION
+                            {{ ?item wdt:P2002 "{scholar.twitter}". }} 
+                            UNION
+                            {{ ?item wdt:P2037 "{scholar.github}". }}
+                        }}
+
+                        # Optional IDs
+                        OPTIONAL {{ ?item wdt:P496 ?orcid. }}
+                        OPTIONAL {{ ?item wdt:P2456 ?dblp. }}
+                        OPTIONAL {{ ?item wdt:P1960 ?googleScholar. }}
+                        OPTIONAL {{ ?item wdt:P549 ?mathGenealogy. }}
+                        OPTIONAL {{ ?item wdt:P227 ?gnd. }}
+                        OPTIONAL {{ ?item wdt:P864 ?acm. }}
+                        OPTIONAL {{ ?item wdt:P2037 ?github. }}
+                        OPTIONAL {{ ?item wdt:P2002 ?twitter. }}
+                        OPTIONAL {{
+                                    ?item rdfs:label ?itemLabel.
+                                    FILTER(LANG(?itemLabel) = "en").
+                                }}
+                        OPTIONAL{{
+                                    ?item wdt:P735 ?fn.
+                                    ?fn rdfs:label ?firstname.
+                                    FILTER(LANG(?firstname) = "en").
+                                }}
+                        OPTIONAL{{
+                                    ?item wdt:P734 ?ln.
+                                    ?ln rdfs:label ?lastname.
+                                    FILTER(LANG(?lastname) = "en").
+                                }}  
+                        OPTIONAL{{
+
+                                {{
+                                    ?item wdt:P108 ?aff.
+                                }}
+                                UNION
+                                {{
+                                    ?item wdt:P69 ?aff.
+                                }}
+
+                                UNION
+                                {{
+                                    ?item wdt:P463 ?aff.
+                                }}
+    
+                                UNION
+                                {{
+                                    ?item wdt:P1416 ?aff.
+                                }}
+                                UNION
+                                {{
+                                    ?item wdt:P512 ?aff.
+                                }}
+                                UNION
+                                {{
+                                     ?item wdt:P39 ?aff.
+                                }}  
+        
+                                ?aff rdfs:label ?affname.
+                                FILTER(LANG(?affname)="en").
+                            }}
+
+                        # Assign Wikidata ID
+                        BIND(STRAFTER(STR(?item), "http://www.wikidata.org/entity/") AS ?wiki_id).
+                    }} 
+                    GROUP BY ?wiki_id
+
+        query_wiki_by_name: |
+                    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                    PREFIX wd: <http://www.wikidata.org/entity/>
+                    PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+                    PREFIX wikibase: <http://wikiba.se/ontology#>
+                    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+                    SELECT DISTINCT
+                        ?wiki_id 
+                        (GROUP_CONCAT(DISTINCT ?itemLabel; SEPARATOR='|') AS ?name)
+                        (GROUP_CONCAT(DISTINCT ?firstname; SEPARATOR='|') AS ?fname)
+                        (GROUP_CONCAT(DISTINCT ?lastname; SEPARATOR='|') AS ?lname)
+                        (GROUP_CONCAT(DISTINCT ?affname; SEPARATOR='|') AS ?affiliation)
+                        
+
+                    WHERE {{
+                        ?item wdt:P31 wd:Q5.  
+
+                        {{
+                            {{
+                                ?item rdfs:label "{scholar.name}"@en.
+                            }}
+                            UNION
+                            {{
+                                ?item skos:altLabel "{scholar.name}"@en.
+                            }}
+                        }}
+
+                        # Optional First Name & Last Name
+                        OPTIONAL {{ 
+                            ?item wdt:P735 ?fn.
+                            ?fn rdfs:label "{scholar.first_name}"@en.
+                        }}
+                        OPTIONAL {{ 
+                            
+                            ?item wdt:P734 ?ln.
+                            ?ln rdfs:label "{scholar.family_name}"@en.
+                        }}
+
+                        # Affiliation Matching
+                        {{
+                            {{
+                                ?item wdt:P108 ?aff.
+                            }}
+                            UNION
+                            {{
+                                ?item wdt:P69 ?aff.
+                            }}
+                            UNION
+                            {{
+                                ?item wdt:P463 ?aff.
+                            }}
+                            UNION
+                            {{
+                                ?item wdt:P1416 ?aff.
+                            }}
+                            UNION
+                            {{
+                                ?item wdt:P512 ?aff.
+                            }}
+                            UNION
+                            {{
+                                ?item wdt:P39 ?aff.
+                            }}
+                            
+                            {affiliation_union}
+                        }}
+
+                        # Optional IDs
+                        OPTIONAL {{ ?item wdt:P496 ?orcid. }}
+                        OPTIONAL {{ ?item wdt:P2456 ?dblp. }}
+                        OPTIONAL {{ ?item wdt:P1960 ?googleScholar. }}
+                        OPTIONAL {{ ?item wdt:P549 ?mathGenealogy. }}
+                        OPTIONAL {{ ?item wdt:P227 ?gnd. }}
+                        OPTIONAL {{ ?item wdt:P864 ?acm. }}
+                        OPTIONAL {{ ?item wdt:P2037 ?github. }}
+                        OPTIONAL {{ ?item wdt:P2002 ?twitter. }}
+                        OPTIONAL {{
+                                    ?item rdfs:label ?itemLabel.
+                                    FILTER(LANG(?itemLabel) = "en").
+                                }}
+                        OPTIONAL{{
+                                    ?item wdt:P735 ?fn.
+                                    ?fn rdfs:label ?firstname.
+                                    FILTER(LANG(?firstname) = "en").
+                                }}
+                        OPTIONAL{{
+                                    ?item wdt:P734 ?ln.
+                                    ?ln rdfs:label ?lastname.
+                                    FILTER(LANG(?lastname) = "en").
+                                }}  
+                        OPTIONAL{{
+
+                                {{
+                                    ?item wdt:P108 ?aff.
+                                }}
+                                UNION
+                                {{
+                                    ?item wdt:P69 ?aff.
+                                }}
+
+                                UNION
+                                {{
+                                    ?item wdt:P463 ?aff.
+                                }}
+    
+                                UNION
+                                {{
+                                    ?item wdt:P1416 ?aff.
+                                }}
+                                UNION
+                                {{
+                                    ?item wdt:P512 ?aff.
+                                }}
+                                UNION
+                                {{
+                                     ?item wdt:P39 ?aff.
+                                }}  
+        
+                                ?aff rdfs:label ?affname.
+                                FILTER(LANG(?affname)="en").
+                            }}
+
+                        # Assign Wikidata ID
+                        BIND(STRAFTER(STR(?item), "http://www.wikidata.org/entity/") AS ?wiki_id).
+                    }} 
+                    GROUP BY ?wiki_id
+
+
+    get_scholar_dblp_id:
+        description: "Retrieve scholar from dblp with the given attributes."
+        query_dblp_by_id: |
+                      PREFIX datacite: <http://purl.org/spar/datacite/>
+                      PREFIX dblp: <https://dblp.org/rdf/schema#>
+                      PREFIX litre: <http://purl.org/spar/literal/>
+                      PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+                      PREFIX bd: <http://www.bigdata.com/rdf#>
+
+                      SELECT DISTINCT 
+                      (GROUP_CONCAT(DISTINCT?nameVar;SEPARATOR='|') AS ?nameVar_1)
+                      (GROUP_CONCAT(DISTINCT?affiliationVar;SEPARATOR='|') AS ?affiliationVar_1)
+                      (GROUP_CONCAT(DISTINCT?orcidVar;SEPARATOR=',') AS ?orcidVar_1)
+                      (GROUP_CONCAT(DISTINCT?dblpVar;SEPARATOR=',') AS ?dblpVar_1)
+                      (GROUP_CONCAT(DISTINCT?googleScholarVar;SEPARATOR=',') AS ?googleScholarVar_1)
+                      (GROUP_CONCAT(DISTINCT?acmVar;SEPARATOR=',') AS ?acmVar_1)
+                      (GROUP_CONCAT(DISTINCT?mathGenealogyVar;SEPARATOR=',') AS ?mathGenealogyVar_1)
+                      (GROUP_CONCAT(DISTINCT?gndVar;SEPARATOR=',') AS ?gndVar_1)
+                      (GROUP_CONCAT(DISTINCT?wikidataVar;SEPARATOR='|') AS ?wikidata)
+                      (GROUP_CONCAT(DISTINCT?githubVar;SEPARATOR=',') AS ?githubVar_1)    
+                      (GROUP_CONCAT(DISTINCT?twitterVar;SEPARATOR=',') AS ?twitterVar_1)
+                      WHERE {{
+    
+                          ?editor rdf:type dblp:Person.
+  
+    
+                      {{ ?editor datacite:hasIdentifier ?dblp_blank.
+                        ?dblp_blank datacite:usesIdentifierScheme datacite:dblp;
+                                    litre:hasLiteralValue "{scholar.dblp_id}". }} UNION
+                    
+                      {{ ?editor datacite:hasIdentifier ?orcid_blank. 
+                        ?orcid_blank datacite:usesIdentifierScheme datacite:orcid;
+                                  litre:hasLiteralValue "{scholar.orcid_id}" .}} UNION
+                  
+        
+                      {{ ?editor datacite:hasIdentifier ?googleScholar_blank. 
+                        ?googleScholar_blank datacite:usesIdentifierScheme datacite:google-scholar;
+                                          litre:hasLiteralValue "{scholar.google_scholar_id}".  }} UNION
+                    
+                      {{ ?editor datacite:hasIdentifier ?mathGenealogy_blank. 
+                        ?mathGenealogy_blank datacite:usesIdentifierScheme datacite:math-genealogy;
+                                          litre:hasLiteralValue  "{scholar.mathGenealogy}".}} UNION
+
+                      {{ ?editor datacite:hasIdentifier ?acm_blank. 
+                        ?acm_blank datacite:usesIdentifierScheme datacite:acm;
+                              litre:hasLiteralValue "{scholar.acm}".}} UNION
+                    
+          
+                      {{ ?editor datacite:hasIdentifier ?gnd_blank. 
+                        ?gnd_blank datacite:usesIdentifierScheme datacite:gnd;
+                                  litre:hasLiteralValue "{scholar.gnd}".}} UNION
+                      
+                      {{ ?editor datacite:hasIdentifier ?github_blank. 
+                        ?github_blank datacite:usesIdentifierScheme datacite:github;
+                                  litre:hasLiteralValue "{scholar.github}".}} UNION
+                      
+                      {{ ?editor datacite:hasIdentifier ?twitter_blank. 
+                        ?twitter_blank datacite:usesIdentifierScheme datacite:twitter;
+                                  litre:hasLiteralValue "{scholar.twitter}".}} UNION
+
+                       {{ OPTIONAL {{?editor dblp:primaryCreatorName "{scholar.name}".
+                        ?editor dblp:primaryAffiliation "{scholar.affiliation_raw}".
+                        }} }} 
+                      
+                      
+       
+  
+                      OPTIONAL {{?editor dblp:primaryCreatorName ?nameVar.}}
+                      OPTIONAL {{ ?editor dblp:primaryAffiliation ?affiliationVar. }}
+                      OPTIONAL {{ ?editor datacite:hasIdentifier ?dblp_blank. 
+                                ?dblp_blank datacite:usesIdentifierScheme datacite:dblp;
+                                            litre:hasLiteralValue ?dblpVar. }}
+                      OPTIONAL {{ ?editor datacite:hasIdentifier ?orcid_blank. 
+                                ?orcid_blank datacite:usesIdentifierScheme datacite:orcid;
+                                              litre:hasLiteralValue ?orcidVar. }}
+                      OPTIONAL {{ ?editor datacite:hasIdentifier ?googleScholar_blank. 
+                                ?googleScholar_blank datacite:usesIdentifierScheme datacite:google-scholar;
+                                                      litre:hasLiteralValue ?googleScholarVar. }}
+                      OPTIONAL {{ ?editor datacite:hasIdentifier ?acm_blank. 
+                                ?acm_blank datacite:usesIdentifierScheme datacite:acm;
+                                          litre:hasLiteralValue ?acmVar. }}
+                      OPTIONAL {{ ?editor datacite:hasIdentifier ?gnd_blank. 
+                                ?gnd_blank datacite:usesIdentifierScheme datacite:gnd;
+                                              litre:hasLiteralValue ?gndVar. }}
+                      OPTIONAL {{ ?editor datacite:hasIdentifier ?mathGenealogy_blank. 
+                                ?mathGenealogy_blank datacite:usesIdentifierScheme datacite:math-genealogy;
+                                                      litre:hasLiteralValue ?mathGenealogyVar. }}
+
+                      OPTIONAL{{ ?editor datacite:hasIdentifier ?wikidata_blank .
+                                  ?wikidata_blank datacite:usesIdentifierScheme datacite:wikidata ;
+                                              litre:hasLiteralValue ?wikidataVar .}}
+                      OPTIONAL {{ ?editor datacite:hasIdentifier ?github_blank. 
+                                ?github_blank datacite:usesIdentifierScheme datacite:github;
+                                          litre:hasLiteralValue ?githubVar. }}
+                      OPTIONAL {{ ?editor datacite:hasIdentifier ?twitter_blank.
+                                ?twitter_blank datacite:usesIdentifierScheme datacite:twitter;
+                                          litre:hasLiteralValue ?twitterVar.}}
+                      
+                      }}
+                      GROUP BY ?editor
+
+        query_dblp_by_name: |
+                      PREFIX datacite: <http://purl.org/spar/datacite/>
+                      PREFIX dblp: <https://dblp.org/rdf/schema#>
+                      PREFIX litre: <http://purl.org/spar/literal/>
+                      PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+                      PREFIX bd: <http://www.bigdata.com/rdf#>
+
+                      SELECT DISTINCT 
+                      (GROUP_CONCAT(DISTINCT?nameVar;SEPARATOR='|') AS ?nameVar_1)
+                      (GROUP_CONCAT(DISTINCT?affiliationVar;SEPARATOR='|') AS ?affiliationVar_1)
+                      (GROUP_CONCAT(DISTINCT?orcidVar;SEPARATOR=',') AS ?orcidVar_1)
+                      (GROUP_CONCAT(DISTINCT?dblpVar;SEPARATOR=',') AS ?dblpVar_1)
+                      (GROUP_CONCAT(DISTINCT?googleScholarVar;SEPARATOR=',') AS ?googleScholarVar_1)
+                      (GROUP_CONCAT(DISTINCT?acmVar;SEPARATOR=',') AS ?acmVar_1)
+                      (GROUP_CONCAT(DISTINCT?mathGenealogyVar;SEPARATOR=',') AS ?mathGenealogyVar_1)
+                      (GROUP_CONCAT(DISTINCT?gndVar;SEPARATOR=',') AS ?gndVar_1)
+                      (GROUP_CONCAT(DISTINCT?wikidataVar;SEPARATOR='|') AS ?wikidata)
+                      (GROUP_CONCAT(DISTINCT?githubVar;SEPARATOR=',') AS ?githubVar_1)    
+                      (GROUP_CONCAT(DISTINCT?twitterVar;SEPARATOR=',') AS ?twitterVar_1)
+                      WHERE {{
+    
+                          ?editor rdf:type dblp:Person.
+
+                       {{
+                       ?editor dblp:primaryCreatorName ?scholarname.
+                      FILTER(CONTAINS(LCASE(?scholarname), LCASE("{scholar.name}")))
+                      }}
+                      {affiliation_union}
+                      
+       
+  
+                      OPTIONAL{{?editor dblp:primaryCreatorName ?nameVar.}}
+                      OPTIONAL {{ ?editor dblp:primaryAffiliation ?affiliationVar. }}
+                      OPTIONAL {{ ?editor datacite:hasIdentifier ?dblp_blank. 
+                                ?dblp_blank datacite:usesIdentifierScheme datacite:dblp;
+                                            litre:hasLiteralValue ?dblpVar. }}
+                      OPTIONAL {{ ?editor datacite:hasIdentifier ?orcid_blank. 
+                                ?orcid_blank datacite:usesIdentifierScheme datacite:orcid;
+                                              litre:hasLiteralValue ?orcidVar. }}
+                      OPTIONAL {{ ?editor datacite:hasIdentifier ?googleScholar_blank. 
+                                ?googleScholar_blank datacite:usesIdentifierScheme datacite:google-scholar;
+                                                      litre:hasLiteralValue ?googleScholarVar. }}
+                      OPTIONAL {{ ?editor datacite:hasIdentifier ?acm_blank. 
+                                ?acm_blank datacite:usesIdentifierScheme datacite:acm;
+                                          litre:hasLiteralValue ?acmVar. }}
+                      OPTIONAL {{ ?editor datacite:hasIdentifier ?gnd_blank. 
+                                ?gnd_blank datacite:usesIdentifierScheme datacite:gnd;
+                                              litre:hasLiteralValue ?gndVar. }}
+                      OPTIONAL {{ ?editor datacite:hasIdentifier ?mathGenealogy_blank. 
+                                ?mathGenealogy_blank datacite:usesIdentifierScheme datacite:math-genealogy;
+                                                      litre:hasLiteralValue ?mathGenealogyVar. }}
+
+                      OPTIONAL{{ ?editor datacite:hasIdentifier ?wikidata_blank .
+                                  ?wikidata_blank datacite:usesIdentifierScheme datacite:wikidata ;
+                                              litre:hasLiteralValue ?wikidataVar .}}
+                      OPTIONAL {{ ?editor datacite:hasIdentifier ?github_blank. 
+                                ?github_blank datacite:usesIdentifierScheme datacite:github;
+                                          litre:hasLiteralValue ?githubVar. }}
+                      OPTIONAL {{ ?editor datacite:hasIdentifier ?twitter_blank.
+                                ?twitter_blank datacite:usesIdentifierScheme datacite:twitter;
+                                          litre:hasLiteralValue ?twitterVar.}}
+                      
+                      }}
+                      GROUP BY ?editor
+
+    get_affiliation_data:
+        description: "Retrieve affiliation data from wikidata."
+        query_affiliation: |
+                    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                    PREFIX wd: <http://www.wikidata.org/entity/>
+                    PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+                    SELECT DISTINCT ?nameuri (LCASE(?nameLabel) AS ?nameVar) ?countryuri WHERE {{
+                    VALUES ?affiliation_type {{ 
+                        wd:Q3918 wd:Q38723 wd:Q31855 wd:Q16917 wd:Q327333 wd:Q484652 
+                        wd:Q4830453 wd:Q163740 wd:Q3914 wd:Q7075 wd:Q380962 wd:Q32053225 wd:Q112872396 wd:Q875538
+                        wd:Q2085381  wd:Q2385804  wd:Q294163 wd:Q245065 wd:Q157031 
+                        wd:Q1194093 wd:Q891723 wd:Q4287745 wd:Q748019 wd:Q155271 wd:Q1391145 wd:Q955824 
+                        wd:Q197952 wd:Q161726 wd:Q1785733 wd:Q708676 wd:Q336473 wd:Q2366457
+                    }}
+                    ?name wdt:P31/wdt:P279* ?affiliation_type .
+                    ?name rdfs:label ?nameLabel .
+                    OPTIONAL{{
+                    ?name wdt:P17 ?country .
+                    }}
+                    FILTER (LANG(?nameLabel) = "en") .
+                    BIND (STRAFTER(STR(?name), "http://www.wikidata.org/entity/") AS ?nameuri).
+                    BIND (STRAFTER(STR(?country), "http://www.wikidata.org/entity/") AS ?countryuri).
+                    }}
+                    LIMIT {limit}
+                    OFFSET {offset}
+
+    collect_scholar_data:
+        description: "Collect Employee of the given organisations"
+        query_employee: |
+                    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                    PREFIX wd: <http://www.wikidata.org/entity/>
+                    PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+                    PREFIX wikibase: <http://wikiba.se/ontology#>
+                    SELECT distinct ?nameuri 
+                            (LCASE(?nameLabel) AS ?nameVar) 
+                            (LCASE(?firstname) AS ?fname) 
+                            (LCASE(?lastname) AS ?lname)  
+                            (LCASE(?affname) AS ?org)
+                            ?affuri
+                    WHERE {{
+                    VALUES ?aff {{ {aff_values}  }}
+                    ?name wdt:P31 wd:Q5.
+                    {{?name wdt:P108 ?aff.}}
+                    UNION {{
+                        ?name wdt:P69 ?aff.
+                    }}
+                    UNION {{
+                        ?name wdt:P463 ?aff.
+                    }}
+                    UNION {{
+                        ?name wdt:P1416 ?aff.
+                    }}
+                    UNION {{
+                        ?name wdt:P512 ?aff.
+                    }}
+                    UNION {{
+                        ?name wdt:P39 ?aff.
+                    }}
+                    ?name rdfs:label ?nameLabel.
+                    OPTIONAL {{ ?name wdt:P735 ?fn.
+                    ?fn rdfs:label ?firstname.
+                    FILTER(LANG(?firstname)="en").
+                    }}
+                    OPTIONAL {{
+                    ?name wdt:P734 ?ln.
+                    ?ln rdfs:label ?lastname.
+                    FILTER(LANG(?lastname)="en").
+                    }}
+                    ?aff rdfs:label ?affname.
+                    FILTER(LANG(?affname)="en").
+                    FILTER(LANG(?nameLabel)="en").
+                    BIND(STRAFTER(STR(?name), "http://www.wikidata.org/entity/") AS ?nameuri).
+                    BIND(STRAFTER(STR(?aff), "http://www.wikidata.org/entity/") AS ?affuri).
+                    }}
+        
+        query_employee_with_exact: |
+                    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                    PREFIX wd: <http://www.wikidata.org/entity/>
+                    PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+                    PREFIX wikibase: <http://wikiba.se/ontology#>
+                    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                    SELECT distinct ?nameuri 
+                            (LCASE(?nameLabel) AS ?nameVar) 
+                            (LCASE(?firstname) AS ?fname) 
+                            (LCASE(?lastname) AS ?lname)  
+                            (LCASE(?affname) AS ?org)
+                            ?affuri
+                    WHERE {{
+                    
+                    {aff_values}
+            
+                    
+                    ?name wdt:P31 wd:Q5.
+                    {{?name wdt:P108 ?aff.}}
+                    UNION {{
+                        ?name wdt:P69 ?aff.
+                    }}
+                    UNION {{
+                        ?name wdt:P463 ?aff.
+                    }}
+                    UNION {{
+                        ?name wdt:P1416 ?aff.
+                    }}
+                    UNION {{
+                        ?name wdt:P512 ?aff.
+                    }}
+                    UNION {{
+                        ?name wdt:P39 ?aff.
+                    }}
+                    ?name rdfs:label ?nameLabel.
+                    OPTIONAL {{ ?name wdt:P735 ?fn.
+                    ?fn rdfs:label ?firstname.
+                    FILTER(LANG(?firstname)="en").
+                    }}
+                    OPTIONAL {{
+                    ?name wdt:P734 ?ln.
+                    ?ln rdfs:label ?lastname.
+                    FILTER(LANG(?lastname)="en").
+                    }}
+                    ?aff rdfs:label ?affname.
+                    FILTER(LANG(?affname)="en").
+                    FILTER(LANG(?nameLabel)="en").
+                    BIND(STRAFTER(STR(?name), "http://www.wikidata.org/entity/") AS ?nameuri).
+                    BIND(STRAFTER(STR(?aff), "http://www.wikidata.org/entity/") AS ?affuri).
+                    }}
+        

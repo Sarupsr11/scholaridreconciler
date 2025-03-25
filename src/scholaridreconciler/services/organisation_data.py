@@ -1,98 +1,142 @@
 import logging
 import sqlite3
+import os
 from typing import Any
-
 import pandas as pd
 from SPARQLWrapper import JSON, SPARQLWrapper
-
-from scholaridreconciler.services.organsiation_preprocessing import preprocess_organisation
-
+from scholaridreconciler.services.api_endpoint import Endpoint
+from scholaridreconciler.services.organisation_preprocessing import OrganisationPreprocessing
+from scholaridreconciler.services.load_sparql_query import LoadQueryIntoDict
+from concurrent.futures import ThreadPoolExecutor, as_completed
 """
 This script retrieves organization names and their Wikidata IDs based on specified types
 and saves the data to a CSV file.
 """
 
-WIKIDATA_SPARQL_ENDPOINT = "https://qlever.cs.uni-freiburg.de/api/wikidata"
-
 logging.basicConfig(level =logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
-def retrieve_possible_organisation(endpoint: str, limit: int, offset: int) -> list[Any]:
-    
-    query = f"""
-    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-    PREFIX wd: <http://www.wikidata.org/entity/>
-    PREFIX wdt: <http://www.wikidata.org/prop/direct/>
-    SELECT DISTINCT ?nameuri (LCASE(?nameLabel) AS ?nameVar) ?countryuri WHERE {{
-      VALUES ?affiliation_type {{ 
-        wd:Q3918 wd:Q38723 wd:Q31855 wd:Q16917 wd:Q327333 wd:Q484652 
-        wd:Q4830453 wd:Q163740 wd:Q3914 wd:Q7075 wd:Q380962 wd:Q32053225 wd:Q112872396 wd:Q875538
-        wd:Q2085381  wd:Q2385804  wd:Q294163 wd:Q245065 wd:Q157031 
-        wd:Q1194093 wd:Q891723 wd:Q4287745 wd:Q748019 wd:Q155271 wd:Q1391145 wd:Q955824 
-        wd:Q197952 wd:Q161726 wd:Q1785733 wd:Q708676 wd:Q336473
-      }}
-      ?name wdt:P31/wdt:P279* ?affiliation_type .
-      ?name rdfs:label ?nameLabel .
-      OPTIONAL{{
-      ?name wdt:P17 ?country .
-      }}
-      FILTER (LANG(?nameLabel) = "en") .
-      BIND (STRAFTER(STR(?name), "http://www.wikidata.org/entity/") AS ?nameuri).
-      BIND (STRAFTER(STR(?country), "http://www.wikidata.org/entity/") AS ?countryuri).
-    }}
-    LIMIT {limit}
-    OFFSET {offset}
-    """
-    sparql = SPARQLWrapper(endpoint)
-    sparql.setReturnFormat(JSON)
-    sparql.setQuery(query)
+class RetrieveAffiliation:
 
-    try:
-        response = sparql.queryAndConvert()
+    def __init__(self):
+        self.endpoint = Endpoint()
+        self.wikidata_api = self.endpoint.wiki_api_in_use()
+        self.organisation_json_data = []
+        self.df = None
         
-        return response.get('results', {}).get('bindings', [])
-    except Exception as e:
-        logging.error(f"SPARQL query error: {e}")
-        return []
 
-def concurrent_run(endpoint: str) -> list[Any]:
-    limit = 100000
-    offset = 0
-    organisation_json_data = []
-    while True:
-        result = retrieve_possible_organisation(endpoint, limit, offset)
-        if not result:
-            break
-        organisation_json_data.extend(result)
-        logging.info(f"Dataset size: {len(organisation_json_data)} records")
-        offset += limit
-    return organisation_json_data
+    def retrieve_possible_organisation(self, limit, offset) -> list[Any]:
+        query = self.fill_placeholders("query_affiliation", limit, offset)
+        sparql = SPARQLWrapper(self.wikidata_api)   # SPARQLWrapper object
+        sparql.setReturnFormat(JSON)                # Set return format to JSON         
+        sparql.setQuery(query)                      # Set the query to be executed
 
-def convert_to_dataframe_with_country(organisation: list[Any]) -> pd.DataFrame:
-    n = len(organisation)
-    organisation_dict = {
-        'uri': [organisation[i].get('nameuri', {}).get('value', '')  for i in range(n)],
-        'org': [organisation[i].get('nameVar', {}).get('value', '')  for i in range(n)],
-        'countryuri': [organisation[i].get('countryuri', {}).get('value', '')  for i in range(n)],
-    }
-    return pd.DataFrame(organisation_dict)
-
-# Execute and save organsiation data with country to CSV
-organisation_json = concurrent_run(WIKIDATA_SPARQL_ENDPOINT)
-
-
-# Execute preprocessed organisation data without country
-preproccesed_dataframe, stop_words = preprocess_organisation(convert_to_dataframe_with_country(organisation_json))
+        try:
+            response = sparql.queryAndConvert()
+            return response.get('results', {}).get('bindings', [])
+        except Exception as e:
+            logging.error(f"SPARQL query error: {e}")
+            return []
 
 
 
+    def fill_placeholders(self,query_type, limit, offset):
+        query_file = "src/scholaridreconciler/services/sparql_queries.yaml"
+        query_name = "get_affiliation_data"
+        query_load = LoadQueryIntoDict()
+        query = query_load.load_queries(query_file)
 
-def create_db(organisation:pd.DataFrame):
-    connection = sqlite3.connect("src/scholaridreconciler/services/organisation_data.db")
-    organisation.to_sql("organisation_with_loc",connection,if_exists='replace',index=False)
-    connection.execute("CREATE INDEX  IF NOT EXISTS country on organisation_with_loc (countryuri) ")
-    connection.execute("CREATE INDEX IF NOT EXISTS proc_org on organisation_with_loc (processed_org) ")
+        if query_name not in query["queries"] or query_type not in query["queries"][query_name]:
+            raise KeyError(f"Query '{query_type}' not found under '{query_name}' in YAML file.")
+
+        query_template = query["queries"][query_name][query_type]
+        return query_template.format(limit = limit,offset = offset)
+
+    def concurrent_run(self):
+        """
+
+        set a limit to retrieving data to avoid overload and retrieve iteratively.
+
+        """
+        limit = 100000
+        max_offset = 3000000  # Assume an upper limit for example purposes
+        offsets = range(0,max_offset,limit)
+        max_workers = max((os.cpu_count() or 1) - 1, 1)  # At least 1 worker
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            
+            future_to_offset = {
+                    executor.submit(self.retrieve_possible_organisation, limit, offset): offset for offset in offsets
+            }
+        
+            for future in as_completed(future_to_offset):
+                offset = future_to_offset[future]
+                try:
+                    result = future.result()
+                    if result:
+                        self.organisation_json_data.extend(result)
+                        logging.info(f"Processed offset {offset}, total records: {len(self.organisation_json_data)}")
+                except Exception as e:
+                    logging.error(f"Error processing offset {offset}: {e}")
+
+    def convert_to_dataframe(self):
+
+        """
+        convert the retrieve json data into a dataframe
+        
+        """
+        n = len(self.organisation_json_data)
+        org_dict = {
+        'uri': [self.organisation_json_data[i].get('nameuri', {}).get('value', '')  for i in range(n)],
+        'org': [self.organisation_json_data[i].get('nameVar', {}).get('value', '')  for i in range(n)],
+        'countryuri': [self.organisation_json_data[i].get('countryuri', {}).get('value', '')  for i in range(n)],
+        }
+        self.df = pd.DataFrame(org_dict)
+
+
+    def additional_preprocessing(self):
+
+        """
+        preprocessing for shortening and fastening the fuzzy matching search
+
+        """
+
+        df = OrganisationPreprocessing(self.df)
+        self.df = df.extending_dataframe()
+
+    def creating_database(self):
+
+        """
+        creating a database from the organisation database indexed on country's QID.
+        
+        """
+
+        db_path = os.getenv("DATABASE_PATH",
+                        os.path.join(os.path.dirname(os.path.abspath(__file__)), ".cache"
+                                     , "db", "organisation_data.db"))
+
+        # Ensure the directory exists
+        os.makedirs(os.path.dirname(db_path), exist_ok=True)
+
+        # Debugging path
+        print(f"Connecting to database at: {db_path}")
+
+        connection = sqlite3.connect(db_path)
+        self.df.to_sql("organisation_with_loc", connection, if_exists='replace', index=False)
+        connection.execute("CREATE INDEX  IF NOT EXISTS country on organisation_with_loc (countryuri) ")
+
+
+    def execute_whole_process(self):
+
+        """
+        
+        Execute the whole pipeline
+        
+        """
+
+        self.concurrent_run()
+        self.convert_to_dataframe()
+        self.additional_preprocessing()
+        self.creating_database()
 
 
 
 
-create_db(preproccesed_dataframe)

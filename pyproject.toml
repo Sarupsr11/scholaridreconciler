@@ -27,7 +27,7 @@ dependencies = [
     "rapidfuzz",
     "nltk",
     "numpy==1.26.4",
-    "spacy==3.8.0",
+    
 
 ]
 

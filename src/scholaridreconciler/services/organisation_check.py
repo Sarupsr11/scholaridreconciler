@@ -1,164 +1,221 @@
 import sqlite3
 from typing import Any
-
 import pandas as pd
+import logging
+import os
 from rapidfuzz import fuzz, process
-
 from scholaridreconciler.models.scholar import Scholar
-from scholaridreconciler.services.countries_stopwords import countries_wikidata, stopwords
-
+from scholaridreconciler.services.organisation_preprocessing import OrganisationPreprocessing
+from scholaridreconciler.services.countries_stopwords import countries_wikidata
+from scholaridreconciler.services.affiliation_segregation import AffiliationSegregate
 # create a organisation dataframe
 
-connection = sqlite3.connect('src/scholaridreconciler/services/organisation_data.db')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+db_path = os.getenv("DATABASE_PATH",
+                    os.path.join(os.path.dirname(os.path.abspath(__file__)),".cache"
+                                 ,"db", "organisation_data.db"))
+
+# Ensure the directory exists
+os.makedirs(os.path.dirname(db_path), exist_ok=True)
+print(f"Connecting to database at: {db_path}")
+connection = sqlite3.connect(db_path,check_same_thread=False)
 
 
-def filter_organization_name(name):
-    if name is not None:
-        name_new = name.replace(',','')
-        words = name_new.strip().split()
-        important_words = [word.lower() for word in words if word.lower() not in countries_wikidata 
-                           and word.lower() not in stopwords]
 
-        return " ".join(important_words)
+import pandas as pd
+
+class OrganisationSearch:
+    
+    def __init__(self, scholar:Scholar):
+        self.df = pd.DataFrame({})  # Initialize an empty DataFrame
+        self.scholar = scholar
+        self.connection = connection
+        self.process_word = OrganisationPreprocessing()
+        self.original = self.scholar.affiliation_raw.lower()
+        aff_seg = AffiliationSegregate(self.scholar)
+        aff_seg.collect_countries()
+        self.country = aff_seg.countries
+        self.country_uri = []
+        self.affiliation_index = {}
         
-    else:
-        return None 
 
+    def detect_countryuri(self):
+        for i in range(len(self.country)):
+            self.country_uri.append(countries_wikidata[self.country[i]])
+        return self.country_uri
 
-def brute_search(organisation):
-
-    affiliation_index: dict[Any,Any] = {}
-    organisation_df = pd.DataFrame({})
-    organisation_part = organisation.split()
-    for word in organisation_part:
-        query = "select uri, processed_org from organisation_with_loc where processed_org like ?;"
-        organisation_df = pd.concat([organisation_df ,
-                                     pd.read_sql(query, connection,params=(f'%{word}%',))],ignore_index=True)
-    choices = organisation_df['processed_org'].unique()
-    matches_affiliation = process.extract(query = organisation,choices = choices,
-                                          scorer = fuzz.WRatio,score_cutoff=70,limit = None)
-    for org, score, _ in matches_affiliation:
-        index = organisation_df.loc[organisation_df.processed_org == org].uri.to_numpy()
-        if len(index)>0:
-            for i in range(len(index)):
-                index_no = index[i]
-
-                affiliation_index.update({index_no:score})       
-    return affiliation_index
-
-
-
-
-def top_organisation(scholar:Scholar):
-
-    affiliation_index: dict[Any,Any] = {}
-
-    if scholar.affiliation is not None:
-        
-        (organisation ,city, country ) = scholar.affiliation
-        if country[1] is not None:
-            country_qid = countries_wikidata[country[1].lower()]
-            query = "select uri, org from organisation_with_loc where countryuri = ? ;"
-            organisation_df = pd.read_sql(query, connection, params=(country_qid,))
-            choices = organisation_df['org'].unique()
-            matches_affiliation = process.extract(query = organisation[1].lower(),choices = choices,
-                                                  scorer = fuzz.WRatio,score_cutoff=70,limit = None)
-
-            if len(matches_affiliation)>0:
-                for org, score, _ in matches_affiliation:
-                    index = organisation_df.loc[organisation_df.org == org].uri.to_numpy()
-                    if len(index)>0:
-                        for i in range(len(index)):
-                            index_no = index[i]
-
-                            affiliation_index.update({index_no:score})
-
-            else:
-                affiliation_index = brute_search(filter_organization_name(organisation[1].lower()))
-
-
-        else: 
-            organisation_string = filter_organization_name(organisation[1].lower())
-            query = "select uri, org from organisation_with_loc where processed_org like ?;"
-            organisation_df = pd.read_sql(query, connection, params=(f'%{organisation_string}%',))
-            choices = organisation_df['org'].unique()
-            
-            matches_affiliation = process.extract(query = organisation[1].lower(),
-                                                  choices = choices, scorer = fuzz.WRatio,
-                                                  score_cutoff=70,limit = None)
-
-            if len(matches_affiliation)>0:
-                for org, score, _ in matches_affiliation:
-                    index = organisation_df.loc[organisation_df.org == org].uri.to_numpy()
-                    if len(index)>0:
-                        for i in range(len(index)):
-                            index_no = index[i]
-
-                            affiliation_index.update({index_no:score})
-
-            else:
-                affiliation_index = brute_search(filter_organization_name(organisation[1].lower()))
-
-
-    elif scholar.affiliation_raw is not None:
-
-        country_name: str| None = None
-        affiliation_name = scholar.affiliation_raw.replace(',','')
-        for word in affiliation_name.split():
-            if word.lower() in countries_wikidata:
-                country_name = word.lower()
-                break
-        if country_name is not None:
-            if country_name in countries_wikidata:
-                country_qid = countries_wikidata[country_name]
-                query = "select uri, org from organisation_with_loc where countryuri = ? ;"
-                organisation_df = pd.read_sql(query, connection, params=(country_qid,))
-                choices = organisation_df['org'].unique()
-                organisation_string = filter_organization_name(scholar.affiliation_raw)
-                matches_affiliation = process.extract(query = organisation_string, 
-                                                    scorer = fuzz.partial_ratio ,
-                                                    choices = choices,score_cutoff=90,
-                                                    limit=None)
-
-                if len(matches_affiliation)>0:
-                    for org, score, _ in matches_affiliation:
-                        index = organisation_df.loc[organisation_df.org == org].uri.to_numpy()
-                        if len(index)>0:
-                            for i in range(len(index)):
-                                index_no = index[i]
-
-                                affiliation_index.update({index_no:score})
-                
-                else:
-                    affiliation_index = brute_search(filter_organization_name(scholar.affiliation_raw.lower()))
-
-
-        elif scholar.affiliation_raw is not None and len(scholar.affiliation_raw)>0:
-            organisation_string = filter_organization_name(scholar.affiliation_raw.lower())
-            query = "select uri,org from organisation_with_loc where processed_org like ?;"
-            organisation_df = pd.read_sql(query, connection, params=(f'%{organisation_string}%',))
-            
-            choices = organisation_df['org'].unique()
-            matches_affiliation = process.extract(query = scholar.affiliation_raw.lower() ,
-                                                    choices = choices, scorer = fuzz.WRatio,
-                                                    score_cutoff=70,limit = None)
-
-            if len(matches_affiliation)>0:
-                for org, score, _ in matches_affiliation:
-                    index = organisation_df.loc[organisation_df.org == org].uri.to_numpy()
-                    if len(index)>0:
-                        for i in range(len(index)):
-                            index_no = index[i]
-
-                            affiliation_index.update({index_no:score})
-                
-            else:
-                affiliation_index = brute_search(filter_organization_name(scholar.affiliation_raw.lower()))
+    def search_with_no_processing(self):
+        query = """SELECT uri, ImpWord FROM organisation_with_loc WHERE org LIKE ?"""
+        new_df = pd.read_sql(query, self.connection, params=(f'%{self.original}%',))
+        self.df = pd.concat([self.df, new_df], ignore_index=True)
+        if len(self.df) > 0:
+            return True
         else:
-            raise ValueError("Affiliation Placeholder is Empty.")
+            return False
+
+    def search_with_important_words(self):
+        org = self.process_word.remove_freqWords(self.original)
+        org_split = org.split()
+        query = """SELECT uri, ImpWord FROM organisation_with_loc WHERE ImpWord LIKE ?"""
+
+        for word in org_split:
+            new_df = pd.read_sql(query, self.connection, params=(f'%{word}%',))
+            self.df = pd.concat([self.df, new_df], ignore_index=True)
+
+        if len(self.df) > 0:
+            return True
+        else:
+            return False
+
+    def search_with_abbreviation(self):
+        org = self.process_word.abbreviation(self.original)
+        query = """SELECT uri, ImpWord FROM organisation_with_loc WHERE abv_org LIKE ?"""
+        new_df = pd.read_sql(query, self.connection, params=(f'{org}%',))
+        self.df = pd.concat([self.df, new_df], ignore_index=True)
+
+        # Reverse abbreviation
+        rev_org = org[::-1]  
+        query = """SELECT uri, ImpWord abv_org FROM organisation_with_loc WHERE abv_org LIKE ?"""
+        new_df = pd.read_sql(query, self.connection, params=(f'{rev_org}%',))
+        self.df = pd.concat([self.df, new_df], ignore_index=True)
+        if len(self.df) > 0:
+            return True
+        else:
+            return False
+
+    def search_with_abbreviation_with_dot(self):
+        org = self.process_word.abbreviation_with_dot(self.original)
+        query = """SELECT uri, ImpWord FROM organisation_with_loc WHERE abv_org_with_dot LIKE ?"""
+        new_df = pd.read_sql(query, self.connection, params=(f'{org}%',))
+        self.df = pd.concat([self.df, new_df], ignore_index=True)
+
+        rev_org = org[::-1]
+        query = """SELECT uri, ImpWord FROM organisation_with_loc WHERE abv_org_with_dot LIKE ?"""
+        new_df = pd.read_sql(query, self.connection, params=(f'{rev_org}%',))
+        self.df = pd.concat([self.df, new_df], ignore_index=True)
+        if len(self.df) > 0:
+            return True
+        else:
+            return False
 
 
-    return affiliation_index
+    def search_with_no_processing_and_country(self):
+        
+        
+        query = """SELECT uri, ImpWord FROM organisation_with_loc WHERE  countryuri = ? and org LIKE ?"""
+        new_df = pd.read_sql(query, self.connection, params=(self.country_uri[-1],f'%{self.original}%',))
+        self.df = pd.concat([self.df, new_df], ignore_index=True)
+        
+        if len(self.df) > 0 :
+            return True
+        else:
+            return False
+
+    def search_with_important_words_and_country(self):
+        
+        org = self.process_word.remove_freqWords(self.original)
+        org_split = org.split()
+        query = """SELECT uri, ImpWord FROM organisation_with_loc WHERE countryuri = ? and ImpWord LIKE ?"""
+
+        for word in org_split:
+            new_df = pd.read_sql(query, self.connection, params=(self.country_uri[-1],f'%{word}%',))
+            self.df = pd.concat([self.df, new_df], ignore_index=True)
+        if len(self.df) > 0:
+            return True
+        else:
+            return False
+
+    def search_with_abbreviation_and_country(self):
+        
+        org = self.process_word.abbreviation(self.original)
+        query = """SELECT uri, ImpWord FROM organisation_with_loc WHERE countryuri = ? and  abv_org LIKE ?"""
+        new_df = pd.read_sql(query, self.connection, params=(self.country_uri[-1],f'{org}%',))
+        self.df = pd.concat([self.df, new_df], ignore_index=True)
+
+        # Reverse abbreviation
+        rev_org = org[::-1]  
+        query = """SELECT uri, ImpWord abv_org FROM organisation_with_loc WHERE countryuri = ? and abv_org LIKE ?"""
+        new_df = pd.read_sql(query, self.connection, params=(self.country_uri[-1],f'{rev_org}%',))
+        self.df = pd.concat([self.df, new_df], ignore_index=True)
+        if len(self.df) > 0:
+            return True
+        else:
+            return False
+
+    def search_with_abbreviation_with_dot_and_country(self):
+        org = self.process_word.abbreviation_with_dot(self.original)
+        query = """SELECT uri, ImpWord FROM organisation_with_loc WHERE countryuri = ? and abv_org_with_dot LIKE ?"""
+        new_df = pd.read_sql(query, self.connection, params=(self.country_uri[-1],f'{org}%',))
+        self.df = pd.concat([self.df, new_df], ignore_index=True)
+
+        rev_org = org[::-1]
+        query = """SELECT uri, ImpWord FROM organisation_with_loc WHERE countryuri = ? and abv_org_with_dot LIKE ?"""
+        new_df = pd.read_sql(query, self.connection, params=(self.country_uri[-1],f'{rev_org}%',))
+        self.df = pd.concat([self.df, new_df], ignore_index=True)
+        if len(self.df) > 0:
+            return True
+        else:
+            return False
+        
+
+    def fuzzy_matching_aff(self):
+
+        choices = self.df['ImpWord'].unique()
+        org = self.process_word.remove_freqWords(self.original)
+        matches_affiliation = process.extract(query=org, choices=choices,
+                                                scorer=fuzz.WRatio,
+                                                score_cutoff=80, limit=None)
+
+        for org, score, _ in matches_affiliation:
+            index = self.df.loc[self.df.ImpWord == org].uri.to_numpy()
+            if len(index) > 0:
+                for i in range(len(index)):
+                    index_no = index[i]
+
+                    self.affiliation_index.update({index_no: score})
+
+    def selection_preference(self):
+        if self.detect_countryuri():
+            if self.search_with_no_processing_and_country():
+                self.fuzzy_matching_aff()
+                return
+            if self.search_with_important_words_and_country():
+                self.fuzzy_matching_aff()
+                return
+            if self.search_with_abbreviation_and_country():
+                self.fuzzy_matching_aff()
+                return
+            if self.search_with_abbreviation_with_dot_and_country():
+                self.fuzzy_matching_aff()
+                return
+            
+        else:
+            if self.search_with_no_processing():
+                self.fuzzy_matching_aff()
+                return
+            if self.search_with_important_words():
+                self.fuzzy_matching_aff()
+                return
+            if self.search_with_abbreviation():
+                self.fuzzy_matching_aff()
+                return
+            if self.search_with_abbreviation_with_dot():
+                self.fuzzy_matching_aff()
+                return
+        
+        
+
+# scholar = Scholar(affiliation_raw="RWTH Aache University")
+# org = OrganisationSearch(scholar)
+# org.selection_preference()
+# print(org.affiliation_index)
+
+
+
+
+
+
+
 
 
 
