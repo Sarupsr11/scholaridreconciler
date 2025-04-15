@@ -5,15 +5,8 @@ import requests
 
 logging.basicConfig(level =logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
-class Endpoint:
-    """
-    Endpoint class to check if Wikidata and DBLP SPARQL APIs are working.
-    """
-    _api_wiki = "https://qlever.cs.uni-freiburg.de/api/wikidata"
-    _api_wiki_rwth = "https://qlever-api.wikidata.dbis.rwth-aachen.de/"
-    _api_dblp = "https://sparql.dblp.org/sparql"
 
-    def api_checker(func):
+def api_checker(func):
         """Decorator to check if an API is responding to a simple SPARQL query."""
         @wraps(func)
         def wrapper(self):
@@ -34,6 +27,17 @@ class Endpoint:
                 logging.error(f"❌ API {api_url} request failed: {e}")
                 return None  # API is not working
         return wrapper
+
+class Endpoint:
+    """
+    Endpoint class to check if Wikidata and DBLP SPARQL APIs are working.
+    """
+    _api_wiki = "https://qlever.cs.uni-freiburg.de/api/wikidata"
+    _api_wiki_rwth = "https://qlever-api.wikidata.dbis.rwth-aachen.de/"
+    _api_dblp = "https://sparql.dblp.org/sparql"
+
+    
+    
 
     @api_checker
     def wiki_api_in_use(self):
@@ -59,5 +63,5 @@ class Endpoint:
 
 
       
-# end = Endpoint()
-# print(end.preference_wikidata())
+end = Endpoint()
+print(end.preference_wikidata())

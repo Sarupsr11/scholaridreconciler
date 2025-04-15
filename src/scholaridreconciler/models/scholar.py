@@ -51,7 +51,8 @@ class Scholar(BaseModel):
             self.affiliation_raw = self.affiliation_raw
             return self
         elif self.affiliation:
-            self.affiliation_raw = self.affiliation.name+', '+ self.affiliation.location + ', ' + self.affiliation.country
+            self.affiliation_raw = (self.affiliation.name+', '+ self.affiliation.location + ', ' 
+            + self.affiliation.country)
             return self
         else:
             self.affiliation_raw = None

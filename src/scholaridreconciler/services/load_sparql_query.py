@@ -14,5 +14,5 @@ class LoadQueryIntoDict:
                 return yaml.safe_load(file)
         except Exception as e:
             logging.error(f"Error loading query: {e}")
-            return {}
+            return "Error"
         

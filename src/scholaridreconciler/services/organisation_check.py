@@ -1,6 +1,7 @@
 import logging
 import os
 import sqlite3
+from typing import Any
 
 import pandas as pd
 from rapidfuzz import fuzz, process
@@ -32,12 +33,13 @@ class OrganisationSearch:
         self._scholar = scholar
         self._connection = connection
         self._process_word = OrganisationPreprocessing(self._df)
-        self._original = self._scholar.affiliation_raw.lower()
+        if self._scholar.affiliation_raw is not None:
+            self._original = self._scholar.affiliation_raw.lower() 
         self._aff_seg = AffiliationSegregate(self._scholar)
         self._aff_seg.collect_countries()
-        self._country = self._aff_seg.countries
-        self._country_uri = []
-        self._affiliation_index = {}
+        self._country = self._aff_seg._countries
+        self._country_uri: list[Any] = []
+        self._affiliation_index : dict[Any,Any]= {}
         
 
     def detect_countryuri(self):

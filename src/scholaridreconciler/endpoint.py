@@ -44,7 +44,7 @@ async def reconcile_scholar(scholar: Scholar):
     
     search_scholar = SearchScholar(scholar)
     search_scholar.search()
-    result , log = search_scholar.result, search_scholar.final_log
+    result , log = search_scholar._result, search_scholar._final_log
     if result:
         return {
             "message": "Success",

@@ -210,7 +210,8 @@ class ConfidenceScoring:
                 count_max_index.append(j)
                 try:
                     self._matching_dict_wiki['number_of_scholars_with_equal_confidence'] += 1.0
-                    self._matching_dict_wiki['All Wikidata QID with same confidence'].append(self._scholar_list[j].wikidata_id)
+                    self._matching_dict_wiki['All Wikidata QID with same confidence'].append(
+                        self._scholar_list[j].wikidata_id)
                 except TypeError as e:
                     print("TypeError occurred:", e)
                     print("Current state of matching_dict_wiki:", self._matching_dict_wiki)
@@ -241,7 +242,8 @@ class ConfidenceScoring:
 
             if (getattr(self._scholar, attr_name) is not None and getattr(self._max_scholar, attr_name) is not None and
                 getattr(self._scholar, attr_name) != '' and getattr(self._max_scholar, attr_name) != ''):
-                self._matching_dict_wiki['matching_' + attr_name + '_score'] = (process.extract(getattr(self._scholar, attr_name),
+                self._matching_dict_wiki['matching_' + attr_name + '_score'] = (process.extract(
+                    getattr(self._scholar, attr_name),
                                           [getattr(self._max_scholar, attr_name)]
                                           )[0][1] / 100) * (1 - abs(len(getattr(self._scholar, attr_name))
                                         - len(getattr(self._max_scholar, attr_name)

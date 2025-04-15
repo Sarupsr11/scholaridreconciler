@@ -1,4 +1,6 @@
 
+from typing import Any
+
 import pandas as pd
 
 from scholaridreconciler.models.scholar import Scholar
@@ -10,7 +12,7 @@ class AffiliationSegregate:
 
     def __init__(self, scholar:Scholar):
         self._scholar = scholar
-        self._countries = []
+        self._countries: list[Any] = []
 
     
         

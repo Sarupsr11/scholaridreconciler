@@ -21,8 +21,8 @@ class FuzzyScoring:
                   "dblp_id", "orcid_id", "google_scholar_id", "acm",
                   "gnd", "mathGenealogy", "github", "twitter"]
         self._extra_identifier_attributes = 0
-        self._scholar_df['name_title'] = self.scholar_df['Label'].apply(lambda x: x.split()[-1])
-        self._scholar_df['name_first'] = self.scholar_df['Label'].apply(lambda x: " ".join(x.split()[:-1])
+        self._scholar_df['name_title'] = self._scholar_df['Label'].apply(lambda x: x.split()[-1])
+        self._scholar_df['name_first'] = self._scholar_df['Label'].apply(lambda x: " ".join(x.split()[:-1])
                                     if len(x.split()) > 1 else x)
 
         self._scholar_df['fname_score'] = 0
@@ -112,11 +112,11 @@ class FuzzyScoring:
         denominator = (self._affiliation_nunique + self._name_nunique + self._name_title_nunique
                      + self._first_name_nunique + self._family_name_nunique + self._name_first_nunique)
         self._scholar_df['confidence_score'] = (self._name_nunique * self._scholar_df['name_score'] +
-                                            self._name_first_nunique * self._scholar_df['name_first_score'] +
-                                            self._name_title_nunique * self._scholar_df['name_title_score'] +
-                                            self._first_name_nunique * self._scholar_df['fname_score'] +
-                                            self._family_name_nunique * self._scholar_df['lname_score'] +
-                                            self._affiliation_nunique * self._scholar_df['affiliation_score']) / (100 * denominator)
+                        self._name_first_nunique * self._scholar_df['name_first_score'] +
+                        self._name_title_nunique * self._scholar_df['name_title_score'] +
+                        self._first_name_nunique * self._scholar_df['fname_score'] +
+                        self._family_name_nunique * self._scholar_df['lname_score'] +
+                        self._affiliation_nunique * self._scholar_df['affiliation_score']) / (100 * denominator)
         
         self._scholar_df = self._scholar_df.sort_values(by='confidence_score', ascending=False)
 

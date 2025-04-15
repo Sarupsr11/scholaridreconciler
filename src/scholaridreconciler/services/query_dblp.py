@@ -9,31 +9,7 @@ from scholaridreconciler.services.api_endpoint import Endpoint
 from scholaridreconciler.services.load_sparql_query import LoadQueryIntoDict
 
 
-class DblpSearch:
-    """
-    Class to search for a scholar in Wikidata using their IDs.
-    """
-    def __init__(self, scholar: Scholar):
-        self._scholar = scholar
-        self._endpoint = Endpoint()
-        self._dblp_api = self._endpoint.dblp_api_in_use()
-        self._scholar_list = []
-        self._union_blocks = None
-
-    def generate_affiliation_unions(self):
-        aff_seg = AffiliationSegregate(self._scholar)
-        affiliation_parts = aff_seg.collect_each_part()
-        self._union_blocks = "\n".join([
-            f'''{{
-                ?aff dblp:primaryAffiliation ?affname.
-            }} 
-            FILTER(CONTAINS(LCASE(?affname), LCASE("{part}")))
-            ''' for part in affiliation_parts
-        ])
-        
-
-
-    def execute_sparql_query(func):
+def execute_sparql_query(func):
         """
         Decorator to execute a SPARQL query and handle errors.
         """
@@ -52,8 +28,9 @@ class DblpSearch:
                 return []
 
         return wrapper
-    
-    def fill_placeholders(query_type: str):
+
+
+def fill_placeholders(query_type: str):
         """
         Decorator to load and format SPARQL queries with scholar data.
         """
@@ -75,15 +52,43 @@ class DblpSearch:
         
         return decorator
 
+class DblpSearch:
+    """
+    Class to search for a scholar in Wikidata using their IDs.
+    """
+    def __init__(self, scholar: Scholar):
+        self._scholar = scholar
+        self._endpoint = Endpoint()
+        self._dblp_api = self._endpoint.dblp_api_in_use()
+        self._scholar_list: list = []
+        self._union_blocks = None
+
+    def generate_affiliation_unions(self):
+        aff_seg = AffiliationSegregate(self._scholar)
+        affiliation_parts = aff_seg.collect_each_part()
+        self._union_blocks = "\n".join([
+            f'''{{
+                ?aff dblp:primaryAffiliation ?affname.
+            }} 
+            FILTER(CONTAINS(LCASE(?affname), LCASE("{part}")))
+            ''' for part in affiliation_parts
+        ])
+        
+
+    
+    
+    
+
+
     @fill_placeholders(query_type="query_dblp_by_id")
-    def fill_placeholders_ids(self) -> str:
+    def fill_placeholders_ids(self):
         """
         Fill placeholders in the SPARQL query with scholar's IDs.
         """
         pass
 
     @fill_placeholders(query_type="query_dblp_by_name")
-    def fill_placeholders_names(self) -> str:
+    def fill_placeholders_names(self):
         """
         Fill placeholders in the SPARQL query with scholar's name and affiliation.
         """

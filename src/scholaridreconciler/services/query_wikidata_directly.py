@@ -1,5 +1,6 @@
 import logging
 from functools import wraps
+from typing import Any
 
 from rapidfuzz import process
 from SPARQLWrapper import JSON, SPARQLWrapper
@@ -10,30 +11,7 @@ from scholaridreconciler.services.api_endpoint import Endpoint
 from scholaridreconciler.services.load_sparql_query import LoadQueryIntoDict
 
 
-class WikidataSearch:
-    """
-    Class to search for a scholar in Wikidata using their IDs.
-    """
-    def __init__(self, scholar: Scholar):
-        self._scholar = scholar
-        self._endpoint = Endpoint()
-        self._wikidata_api = self._endpoint.preference_wikidata()
-        self._scholar_list = []
-        self._union_blocks = None
-
-    def generate_affiliation_unions(self):
-        aff_seg = AffiliationSegregate(self._scholar)
-        affiliation_parts = aff_seg.collect_each_part()
-        self._union_blocks = "\n".join([
-            f'''{{
-                ?aff rdfs:label "{part}"@en.
-            }} UNION {{
-                ?aff skos:altLabel "{part}"@en.
-            }} UNION''' for part in affiliation_parts
-        ])
-        self._union_blocks += """{{ OPTIONAL{{?item wdt:P31 "{}".}} }}"""
-
-    def execute_sparql_query(func):
+def execute_sparql_query(func):
         """
         Decorator to execute a SPARQL query and handle errors.
         """
@@ -52,37 +30,63 @@ class WikidataSearch:
                 return []
 
         return wrapper
+
+
+def fill_placeholders(query_type: str):
+    """
+    Decorator to load and format SPARQL queries with scholar data.
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(self):
+            query_file = "src/scholaridreconciler/services/sparql_queries.yaml"
+            query_name = "get_scholar_wiki_id"
+            query_load = LoadQueryIntoDict()
+            query = query_load.load_queries(query_file)
+
+            if query_name not in query["queries"] or query_type not in query["queries"][query_name]:
+                raise KeyError(f"Query '{query_type}' not found under '{query_name}' in YAML file.")
+
+            query_template = query["queries"][query_name][query_type]
+            return query_template.format(scholar=self._scholar, affiliation_union = self._union_blocks)
+        return wrapper
+    return decorator
+
+class WikidataSearch:
+    """
+    Class to search for a scholar in Wikidata using their IDs.
+    """
+    def __init__(self, scholar: Scholar):
+        self._scholar = scholar
+        self._endpoint = Endpoint()
+        self._wikidata_api = self._endpoint.preference_wikidata()
+        self._scholar_list: list[Any] = []
+        self._union_blocks = None
+
+    def generate_affiliation_unions(self):
+        aff_seg = AffiliationSegregate(self._scholar)
+        affiliation_parts = aff_seg.collect_each_part()
+        self._union_blocks = "\n".join([
+            f'''{{
+                ?aff rdfs:label "{part}"@en.
+            }} UNION {{
+                ?aff skos:altLabel "{part}"@en.
+            }} UNION''' for part in affiliation_parts
+        ])
+        self._union_blocks += """{{ OPTIONAL{{?item wdt:P31 "{}".}} }}"""
+
     
-    def fill_placeholders(query_type: str):
-        """
-        Decorator to load and format SPARQL queries with scholar data.
-        """
-        def decorator(func):
-            @wraps(func)
-            def wrapper(self):
-                query_file = "src/scholaridreconciler/services/sparql_queries.yaml"
-                query_name = "get_scholar_wiki_id"
-                query_load = LoadQueryIntoDict()
-                query = query_load.load_queries(query_file)
-
-                if query_name not in query["queries"] or query_type not in query["queries"][query_name]:
-                    raise KeyError(f"Query '{query_type}' not found under '{query_name}' in YAML file.")
-
-                query_template = query["queries"][query_name][query_type]
-                return query_template.format(scholar=self._scholar, affiliation_union = self._union_blocks)
-            return wrapper
-        return decorator
             
 
     @fill_placeholders(query_type="query_wiki_by_id")
-    def fill_placeholders_ids(self) -> str:
+    def fill_placeholders_ids(self):
         """
         Fill placeholders in the SPARQL query with scholar's IDs.
         """
         pass
     
     @fill_placeholders(query_type="query_wiki_by_name")
-    def fill_placeholders_names(self) -> str:
+    def fill_placeholders_names(self):
         """
         Fill placeholders in the SPARQL query with scholar name and affiliation.
         """

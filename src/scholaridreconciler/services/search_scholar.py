@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 from scholaridreconciler.models.scholar import Scholar
 from scholaridreconciler.services.query_dblp import DblpSearch
@@ -13,8 +14,8 @@ class SearchScholar:
 
     def __init__(self,scholar: Scholar, bias = 'wikidata'):
         self._scholar = scholar
-        self._scholar_list = []
-        self._dblp_enhanced_scholar = []
+        self._scholar_list: list[Any] = []
+        self._dblp_enhanced_scholar: list[Any] = []
         self._bias = bias
         self._result = None
         self._final_log = None
@@ -100,5 +101,5 @@ scholar = Scholar(name="Stefan Decker", first_name="Josef", family_name="Decker"
 
 search_scholar = SearchScholar(scholar)
 search_scholar.search()
-print(search_scholar.result)
-print(search_scholar.final_log)
+print(search_scholar._result)
+print(search_scholar._final_log)
