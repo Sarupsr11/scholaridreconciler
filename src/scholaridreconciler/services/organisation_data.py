@@ -92,7 +92,7 @@ class RetrieveAffiliation:
         'org': [self._organisation_json_data[i].get('nameVar', {}).get('value', '')  for i in range(n)],
         'countryuri': [self._organisation_json_data[i].get('countryuri', {}).get('value', '')  for i in range(n)],
         }
-        self.df = pd.DataFrame(org_dict)
+        self._df = pd.DataFrame(org_dict)
 
 
     def additional_preprocessing(self):
@@ -142,4 +142,5 @@ class RetrieveAffiliation:
 
 
 
-
+data = RetrieveAffiliation()
+data.execute_whole_process()

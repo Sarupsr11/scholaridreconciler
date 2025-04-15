@@ -72,9 +72,9 @@ class OrganisationPreprocessing:
    
     def extending_dataframe(self):
 
-        self._df['ImpWord'] = [self.remove_freqWords(org) for org in self.df['org'].to_numpy()]
-        self._df['abv_org'] = [self.abbreviation(org) for org in self.df['org'].to_numpy()]
-        self._df['abv_org_with_dot'] = [self.abbreviation_with_dot(org) for org in self.df['org'].to_numpy()]
+        self._df['ImpWord'] = [self.remove_freqWords(org) for org in self._df['org'].to_numpy()]
+        self._df['abv_org'] = [self.abbreviation(org) for org in self._df['org'].to_numpy()]
+        self._df['abv_org_with_dot'] = [self.abbreviation_with_dot(org) for org in self._df['org'].to_numpy()]
 
         return self._df
 

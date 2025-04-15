@@ -1,6 +1,7 @@
 
+
 from pydantic import BaseModel, model_validator
-import logging
+
 
 class Affiliation(BaseModel):
     """

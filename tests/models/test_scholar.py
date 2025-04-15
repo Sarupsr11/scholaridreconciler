@@ -1,5 +1,6 @@
 import unittest
-from scholaridreconciler.models.scholar import Scholar, Affiliation
+
+from scholaridreconciler.models.scholar import Scholar
 
 
 class TestScholar(unittest.TestCase):

@@ -12,19 +12,19 @@ logging.basicConfig(level=logging.INFO)
 class SearchScholar:
 
     def __init__(self,scholar: Scholar, bias = 'wikidata'):
-        self.scholar = scholar
-        self.scholar_list = []
-        self.dblp_enhanced_scholar = []
-        self.bias = bias
-        self.result = None
-        self.final_log = None
+        self._scholar = scholar
+        self._scholar_list = []
+        self._dblp_enhanced_scholar = []
+        self._bias = bias
+        self._result = None
+        self._final_log = None
 
     def enrichment(self):
-        dblp_scholar = DblpSearch(self.scholar)
-        self.dblp_enhanced_scholar.extend(dblp_scholar.get_scholar_list_dblp())
+        dblp_scholar = DblpSearch(self._scholar)
+        self._dblp_enhanced_scholar.extend(dblp_scholar.get_scholar_list_dblp())
         dblp_scholar = []
         log_list = []
-        for scholar in self.dblp_enhanced_scholar:
+        for scholar in self._dblp_enhanced_scholar:
             wiki_scholar = WikidataSearch(scholar)
             scholar_list = wiki_scholar.get_scholar_list()
             confidence = ConfidenceScoring(scholar, scholar_list)
@@ -40,46 +40,46 @@ class SearchScholar:
                     max_score = scholar.confidence_score
                     result = scholar
                     index = i
-            self.result, self.final_log =  result, log_list[index]
+            self._result, self._final_log =  result, log_list[index]
         else:
-            self.result = None
+            self._result = None
 
     def wikidata_search(self):
-        wiki_scholar = WikidataSearch(self.scholar)
+        wiki_scholar = WikidataSearch(self._scholar)
         scholar_list = wiki_scholar.get_scholar_list()
         if scholar_list:
-            confidence = ConfidenceScoring(self.scholar, scholar_list)
-            self.result, self.final_log = confidence.get_final_result()
+            confidence = ConfidenceScoring(self._scholar, scholar_list)
+            self._result, self._final_log = confidence.get_final_result()
         else:
-            self.result = None
+            self._result = None
     
     def fuzzy_search(self):
-        scholar = ScholarRetrieve(self.scholar)
+        scholar = ScholarRetrieve(self._scholar)
         scholar_df = scholar.execute()
-        fuzzy = FuzzyScoring(self.scholar, scholar_df)
+        fuzzy = FuzzyScoring(self._scholar, scholar_df)
         
         return fuzzy.return_topk()
 
     def search(self):
-        if self.bias == 'wikidata':
+        if self._bias == 'wikidata':
             logging.info("Searching in Wikidata")
             self.wikidata_search()
-            if self.result is None:
+            if self._result is None:
                 logging.info("Searching in DBLP")
                 self.enrichment()
-                if self.result is None:
+                if self._result is None:
                     logging.info("Fuzzy Search")
-                    self.result = self.fuzzy_search()
+                    self._result = self.fuzzy_search()
                 else:
-                    self.result = None
-        elif self.bias == 'dblp':
+                    self._result = None
+        elif self._bias == 'dblp':
             logging.info("Searching in DBLP")
             self.enrichment()
-            if self.result is None:
+            if self._result is None:
                 logging.info("Fuzzy Search")
-                self.result = self.fuzzy_search()
+                self._result = self.fuzzy_search()
             else:
-                self.result = None
+                self._result = None
          
         
         
@@ -95,10 +95,10 @@ class SearchScholar:
 
 
 
-# scholar = Scholar(name="Stefan Decker", first_name="Josef", family_name="Decker",
-#                   affiliation_raw="RWTH Aache University",)
+scholar = Scholar(name="Stefan Decker", first_name="Josef", family_name="Decker",
+                  affiliation_raw="RWTH Aache University",)
 
-# search_scholar = SearchScholar(scholar)
-# search_scholar.search()
-# print(search_scholar.result)
-# print(search_scholar.final_log)
+search_scholar = SearchScholar(scholar)
+search_scholar.search()
+print(search_scholar.result)
+print(search_scholar.final_log)

@@ -183,10 +183,10 @@ class OrganisationSearch:
         
         
 
-# scholar = Scholar(affiliation_raw="RWTH Aache University")
-# org = OrganisationSearch(scholar)
-# org.selection_preference()
-# print(org._affiliation_index)
+scholar = Scholar(affiliation_raw="RWTH Aache University")
+org = OrganisationSearch(scholar)
+org.selection_preference()
+print(org._affiliation_index)
 
 
 

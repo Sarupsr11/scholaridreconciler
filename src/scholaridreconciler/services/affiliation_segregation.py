@@ -1,8 +1,10 @@
 
-from scholaridreconciler.models.scholar import Scholar, Affiliation
+import pandas as pd
+
+from scholaridreconciler.models.scholar import Scholar
 from scholaridreconciler.services.countries_stopwords import countries_wikidata
 from scholaridreconciler.services.organisation_preprocessing import OrganisationPreprocessing
-import pandas as pd
+
 
 class AffiliationSegregate:
 
