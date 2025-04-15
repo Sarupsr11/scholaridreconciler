@@ -1,6 +1,7 @@
-import requests
-from functools import wraps
 import logging
+from functools import wraps
+
+import requests
 
 logging.basicConfig(level =logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
@@ -8,9 +9,9 @@ class Endpoint:
     """
     Endpoint class to check if Wikidata and DBLP SPARQL APIs are working.
     """
-    api_wiki = "https://qlever.cs.uni-freiburg.de/api/wikidata"
-    api_wiki_rwth = "https://qlever-api.wikidata.dbis.rwth-aachen.de/"
-    api_dblp = "https://sparql.dblp.org/sparql"
+    _api_wiki = "https://qlever.cs.uni-freiburg.de/api/wikidata"
+    _api_wiki_rwth = "https://qlever-api.wikidata.dbis.rwth-aachen.de/"
+    _api_dblp = "https://sparql.dblp.org/sparql"
 
     def api_checker(func):
         """Decorator to check if an API is responding to a simple SPARQL query."""
@@ -37,24 +38,24 @@ class Endpoint:
     @api_checker
     def wiki_api_in_use(self):
         logging.info("Checking which Wikidata API is in use using freiburg.")
-        return self.api_wiki
+        return self._api_wiki
 
     @api_checker
     def wiki_api_rwth_in_use(self):
         logging.info("Checking which Wikidata API is in use using rwth.")
-        return self.api_wiki_rwth
+        return self._api_wiki_rwth
 
     @api_checker
     def dblp_api_in_use(self):
         logging.info("Checking if DBLP API is in use.")
-        return self.api_dblp
+        return self._api_dblp
 
     def preference_wikidata(self):
         """Check which Wikidata API is preferred."""
         if self.wiki_api_rwth_in_use():
-            return self.api_wiki_rwth
+            return self._api_wiki_rwth
         else:
-            return self.api_wiki
+            return self._api_wiki
 
 
       

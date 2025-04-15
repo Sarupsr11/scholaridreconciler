@@ -1,37 +1,37 @@
 import logging
-import yaml
-from SPARQLWrapper import JSON, SPARQLWrapper
-from scholaridreconciler.models.scholar import Scholar
-from scholaridreconciler.services.api_endpoint import Endpoint
 from functools import wraps
-from rapidfuzz import process
-from scholaridreconciler.services.load_sparql_query import LoadQueryIntoDict
-from scholaridreconciler.services.affiliation_segregation import AffiliationSegregate
 
-        
+from rapidfuzz import process
+from SPARQLWrapper import JSON, SPARQLWrapper
+
+from scholaridreconciler.models.scholar import Scholar
+from scholaridreconciler.services.affiliation_segregation import AffiliationSegregate
+from scholaridreconciler.services.api_endpoint import Endpoint
+from scholaridreconciler.services.load_sparql_query import LoadQueryIntoDict
+
 
 class WikidataSearch:
     """
     Class to search for a scholar in Wikidata using their IDs.
     """
     def __init__(self, scholar: Scholar):
-        self.scholar = scholar
-        self.endpoint = Endpoint()
-        self.wikidata_api = self.endpoint.preference_wikidata()
-        self.scholar_list = []
-        self.union_blocks = None
+        self._scholar = scholar
+        self._endpoint = Endpoint()
+        self._wikidata_api = self._endpoint.preference_wikidata()
+        self._scholar_list = []
+        self._union_blocks = None
 
     def generate_affiliation_unions(self):
-        aff_seg = AffiliationSegregate(self.scholar)
+        aff_seg = AffiliationSegregate(self._scholar)
         affiliation_parts = aff_seg.collect_each_part()
-        self.union_blocks = "\n".join([
+        self._union_blocks = "\n".join([
             f'''{{
                 ?aff rdfs:label "{part}"@en.
             }} UNION {{
                 ?aff skos:altLabel "{part}"@en.
             }} UNION''' for part in affiliation_parts
         ])
-        self.union_blocks += """{{ OPTIONAL{{?item wdt:P31 "{}".}} }}"""
+        self._union_blocks += """{{ OPTIONAL{{?item wdt:P31 "{}".}} }}"""
 
     def execute_sparql_query(func):
         """
@@ -40,7 +40,7 @@ class WikidataSearch:
         @wraps(func)
         def wrapper(self):
             query = func(self)  # Get the query from the wrapped function
-            sparql = SPARQLWrapper(self.wikidata_api)   # SPARQLWrapper object
+            sparql = SPARQLWrapper(self._wikidata_api)   # SPARQLWrapper object
             sparql.setReturnFormat(JSON)                # Set return format to JSON         
             sparql.setQuery(query)                      # Set the query to be executed
             
@@ -69,7 +69,7 @@ class WikidataSearch:
                     raise KeyError(f"Query '{query_type}' not found under '{query_name}' in YAML file.")
 
                 query_template = query["queries"][query_name][query_type]
-                return query_template.format(scholar=self.scholar, affiliation_union = self.union_blocks)
+                return query_template.format(scholar=self._scholar, affiliation_union = self._union_blocks)
             return wrapper
         return decorator
             
@@ -95,7 +95,7 @@ class WikidataSearch:
         """
         
 
-        logging.info(f"Searching using IDs.")
+        logging.info("Searching using IDs.")
         return self.fill_placeholders_ids()
 
     @execute_sparql_query
@@ -112,7 +112,7 @@ class WikidataSearch:
         """
         Identifiers given preference over ambiguous attributes.
         """
-        if not self.scholar.identiers_present_bool():
+        if not self._scholar.identiers_present_bool():
             return self.wiki_search_by_names()
         else:
             if self.wiki_search_by_ids():
@@ -139,17 +139,17 @@ class WikidataSearch:
 
                 # Apply fuzzy matching only if the scholar attribute exists
                 for key, scholar_attr in [
-                    ("name", self.scholar.name),
-                    ("fname", self.scholar.first_name),
-                    ("lname", self.scholar.family_name),
-                    ("affiliation", self.scholar.affiliation_raw),
+                    ("name", self._scholar.name),
+                    ("fname", self._scholar.first_name),
+                    ("lname", self._scholar.family_name),
+                    ("affiliation", self._scholar.affiliation_raw),
                 ]:
                     if scholar_attr:
                         matching_values[key] = process.extract(scholar_attr, extracted_values[key], limit=1)[0][0]
                 
                 
                 # Create a Scholar object with extracted values and identifiers
-                self.scholar_list.append(Scholar(
+                self._scholar_list.append(Scholar(
                     name=matching_values["name"],
                     first_name=matching_values["first_name"],   
                     family_name=matching_values["family_name"],
@@ -169,15 +169,15 @@ class WikidataSearch:
     def get_scholar_list(self):
         self.generate_affiliation_unions()
         self.json_to_scholar_list()
-        return self.scholar_list
+        return self._scholar_list
 
         
 
 
 
-# scholar = Scholar(affiliation_raw="RWTH Aachen University, Department of Computer Science",name = "Stefan Decker")
-# wikidata = WikidataSearch(scholar)
-# print(wikidata.get_scholar_list())
+scholar = Scholar(affiliation_raw="RWTH Aachen University, Department of Computer Science",name = "Stefan Decker")
+wikidata = WikidataSearch(scholar)
+print(wikidata.get_scholar_list())
 
 
 

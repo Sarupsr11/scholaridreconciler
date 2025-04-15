@@ -1,12 +1,12 @@
 import logging
-import yaml
-from SPARQLWrapper import JSON, SPARQLWrapper
-from scholaridreconciler.models.scholar import Scholar
-from scholaridreconciler.services.api_endpoint import Endpoint
 from functools import wraps
-from scholaridreconciler.services.load_sparql_query import LoadQueryIntoDict
-from scholaridreconciler.services.affiliation_segregation import AffiliationSegregate
 
+from SPARQLWrapper import JSON, SPARQLWrapper
+
+from scholaridreconciler.models.scholar import Scholar
+from scholaridreconciler.services.affiliation_segregation import AffiliationSegregate
+from scholaridreconciler.services.api_endpoint import Endpoint
+from scholaridreconciler.services.load_sparql_query import LoadQueryIntoDict
 
 
 class DblpSearch:
@@ -14,16 +14,16 @@ class DblpSearch:
     Class to search for a scholar in Wikidata using their IDs.
     """
     def __init__(self, scholar: Scholar):
-        self.scholar = scholar
-        self.endpoint = Endpoint()
-        self.dblp_api = self.endpoint.dblp_api_in_use()
-        self.scholar_list = []
-        self.union_blocks = None
+        self._scholar = scholar
+        self._endpoint = Endpoint()
+        self._dblp_api = self._endpoint.dblp_api_in_use()
+        self._scholar_list = []
+        self._union_blocks = None
 
     def generate_affiliation_unions(self):
-        aff_seg = AffiliationSegregate(self.scholar)
+        aff_seg = AffiliationSegregate(self._scholar)
         affiliation_parts = aff_seg.collect_each_part()
-        self.union_blocks = "\n".join([
+        self._union_blocks = "\n".join([
             f'''{{
                 ?aff dblp:primaryAffiliation ?affname.
             }} 
@@ -40,7 +40,7 @@ class DblpSearch:
         @wraps(func)
         def wrapper(self):
             query = func(self)  # Get the query from the wrapped function
-            sparql = SPARQLWrapper(self.dblp_api)
+            sparql = SPARQLWrapper(self._dblp_api)
             sparql.setReturnFormat(JSON)
             sparql.setQuery(query)
             
@@ -69,7 +69,7 @@ class DblpSearch:
                     raise KeyError(f"Query '{query_type}' not found under '{query_name}' in YAML file.")
 
                 query_template = query["queries"][query_name][query_type]
-                return query_template.format(scholar=self.scholar, affiliation_union = self.union_blocks)
+                return query_template.format(scholar=self._scholar, affiliation_union = self._union_blocks)
             
             return wrapper
         
@@ -109,7 +109,7 @@ class DblpSearch:
         """
         Identifiers given preference over ambiguous attributes.
         """
-        if not self.scholar.identiers_present_bool():
+        if not self._scholar.identiers_present_bool():
             return self.dblp_search_by_names()
         else:
             return self.dblp_search_by_ids() or self.dblp_search_by_names()
@@ -133,7 +133,7 @@ class DblpSearch:
                 google_scholar_id = results.get("googleScholarVar_1")
                 github = results.get("githubVar_1")
                 twitter = results.get("twitterVar_1")
-                self.scholar_list.append(Scholar(
+                self._scholar_list.append(Scholar(
                     name=name,
                     affiliation_raw=affiliation_raw,
                     orcid_id=orcid_id,
@@ -149,12 +149,12 @@ class DblpSearch:
     def get_scholar_list_dblp(self):
         self.generate_affiliation_unions()
         self.json_to_scholar_list()
-        return self.scholar_list
+        return self._scholar_list
 
 
 
-# scholar = Scholar(name="Stefan Decker", affiliation_raw="RWTH, Aachen, Department of Computer Science, Germany")
-# dblp = DblpSearch()
-# print(dblp.get_scholar_list_dblp(scholar))
+scholar = Scholar(name="Stefan Decker", affiliation_raw="RWTH, Aachen, Department of Computer Science, Germany")
+dblp = DblpSearch(scholar)
+print(dblp.get_scholar_list_dblp())
 
 

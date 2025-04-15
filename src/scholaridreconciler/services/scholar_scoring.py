@@ -1,12 +1,9 @@
 
-from rapidfuzz import fuzz, process
+
 import pandas as pd
+from rapidfuzz import fuzz, process
+
 from scholaridreconciler.models.scholar import Scholar
-from scholaridreconciler.services.scholar_affiliation import ScholarRetrieve
-from typing import Any
-
-
-
 
 
 class FuzzyScoring:

@@ -1,11 +1,14 @@
-from fastapi import FastAPI
-from starlette.responses import RedirectResponse
-from scholaridreconciler.services.organisation_data import RetrieveAffiliation
-from scholaridreconciler.services.search_scholar import SearchScholar
-from scholaridreconciler.models.scholar import Scholar
 import logging
 import os
 import sqlite3
+
+from fastapi import FastAPI
+from starlette.responses import RedirectResponse
+
+from scholaridreconciler.models.scholar import Scholar
+from scholaridreconciler.services.organisation_data import RetrieveAffiliation
+from scholaridreconciler.services.search_scholar import SearchScholar
+
 app = FastAPI()
 
 

@@ -23,16 +23,19 @@ dependencies = [
     "rdflib",
     "typing",
     "SPARQLWrapper",
+    "fuzzywuzzy",
     "pandas",
     "rapidfuzz",
     "nltk",
     "numpy==1.26.4",
-    
-
+    "geotext",
+    "google-cloud-language",
+    "transformers",
+    "spacy"
 ]
 
 requires-python = ">=3.10"
-classifiers=[
+classifiers = [
     "Development Status :: 4 - Beta",
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.10",
@@ -44,10 +47,14 @@ classifiers=[
     "Intended Audience :: Education",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: Apache Software License"
-    ]
+]
 dynamic = ["version", "description"]
+
 [tool.hatch.version]
 path = "src/scholaridreconciler/__init__.py"
+
+[tool.my_project]
+database_path = "/src/scholaridreconciler/services/.cache/db/organisation_data.db"
 
 [project.urls]
 Home = ""
@@ -60,12 +67,11 @@ test = [
     "pytest",
     "pytest-cov",
     "ruff",
-    "mypy",
+    "mypy"
 ]
 
 [project.scripts]
 scholar-id-reconciler = "scholaridreconciler.cli:cli"
-
 
 [tool.ruff]
 # Set the maximum line length to 79.
@@ -84,7 +90,7 @@ select = [
     # flake8-simplify
     "SIM",
     # isort
-    "I",
+    "I"
 ]
 ignore = [
     # if-else-block-instead-of-if-exp
@@ -93,8 +99,7 @@ ignore = [
     "SIM117"
 ]
 # Allow fix for all enabled rules (when `--fix`) is provided.
-#fixable = ["ALL"]
-
+# fixable = ["ALL"]
 
 [tool.ruff.format]
 # Like Black, automatically detect the appropriate line ending
@@ -108,14 +113,20 @@ legacy_tox_ini = """
 
     [testenv]
     description = run the tests with pytest
-    deps =.[test]
+    deps = .[test]
     package = wheel
     wheel_build_env = .pkg
     allowlist_externals =
         scripts/*
         coverage
+        copy
+    setenv =
+        DATABASE_PATH = {env:CI_PROJECT_DIR:.}/src/scholaridreconciler/services/.cache/db/organisation_data.db
     commands =
+        python -c "import os; print('Temporary directory:', os.environ.get('DATABASE_PATH'))"
         pytest --junitxml=report.xml {tty:--color=yes} {posargs}
+
+
 
     [testenv:coverage]
     description = run test coverage
@@ -127,25 +138,22 @@ legacy_tox_ini = """
 
     [testenv:format]
     description = install ruff and format the project code
-    deps =
-        ruff
+    deps = ruff
     commands =
         ruff format
 
     [testenv:lint]
     description = run linters
     skip_install = true
-    deps =
-        ruff
+    deps = ruff
     commands =
         ruff check --fix
 
     [testenv:type]
     description = run type checks
-    deps =
-        mypy>=1.1
+    deps = mypy>=1.1
     commands =
-        mypy  {posargs:src/scholaridreconciler}
+        mypy {posargs:src/scholaridreconciler}
 """
 [tool.mypy]
 follow_imports = "skip"
@@ -153,14 +161,15 @@ strict_optional = true
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = ["yaml","dateutil.parser", "dateutil", "tabulate", "requests"]
+module = ["yaml", "dateutil.parser", "dateutil", "tabulate", "requests"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 minversion = "6.0"
 testpaths = [
-    "tests",
+    "tests"
 ]
+asyncio_mode = "auto"
 
 [tool.datamodel-codegen]
 field-constraints = true
@@ -170,4 +179,4 @@ target-python-version = "3.10"
 
 [tool.black]
 skip-string-normalization = true
-line-length = 120
+line-length = 150

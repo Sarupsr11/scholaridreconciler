@@ -1,16 +1,16 @@
 
 import re
+
 import pandas as pd
+
 from scholaridreconciler.services.countries_stopwords import countries_wikidata, stopwords, useless_words
-
-
 
 
 class OrganisationPreprocessing:
 
-    def __init__(self, df : pd.DataFrame = pd.DataFrame({})):
+    def __init__(self, df : pd.DataFrame):
 
-        self.df = df
+        self._df = df
         
     def lowercase_all_words(self, org: str) -> str:
 
@@ -72,11 +72,11 @@ class OrganisationPreprocessing:
    
     def extending_dataframe(self):
 
-        self.df['ImpWord'] = [self.remove_freqWords(org) for org in self.df['org'].to_numpy()]
-        self.df['abv_org'] = [self.abbreviation(org) for org in self.df['org'].to_numpy()]
-        self.df['abv_org_with_dot'] = [self.abbreviation_with_dot(org) for org in self.df['org'].to_numpy()]
+        self._df['ImpWord'] = [self.remove_freqWords(org) for org in self.df['org'].to_numpy()]
+        self._df['abv_org'] = [self.abbreviation(org) for org in self.df['org'].to_numpy()]
+        self._df['abv_org_with_dot'] = [self.abbreviation_with_dot(org) for org in self.df['org'].to_numpy()]
 
-        return self.df
+        return self._df
 
 
 

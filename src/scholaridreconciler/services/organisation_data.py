@@ -1,13 +1,16 @@
 import logging
-import sqlite3
 import os
+import sqlite3
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
+
 import pandas as pd
 from SPARQLWrapper import JSON, SPARQLWrapper
+
 from scholaridreconciler.services.api_endpoint import Endpoint
-from scholaridreconciler.services.organisation_preprocessing import OrganisationPreprocessing
 from scholaridreconciler.services.load_sparql_query import LoadQueryIntoDict
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from scholaridreconciler.services.organisation_preprocessing import OrganisationPreprocessing
+
 """
 This script retrieves organization names and their Wikidata IDs based on specified types
 and saves the data to a CSV file.
@@ -18,15 +21,15 @@ logging.basicConfig(level =logging.INFO, format="%(asctime)s - %(name)s - %(leve
 class RetrieveAffiliation:
 
     def __init__(self):
-        self.endpoint = Endpoint()
-        self.wikidata_api = self.endpoint.wiki_api_in_use()
-        self.organisation_json_data = []
-        self.df = None
+        self._endpoint = Endpoint()
+        self._wikidata_api = self._endpoint.wiki_api_in_use()
+        self._organisation_json_data = []
+        self._df = None
         
 
     def retrieve_possible_organisation(self, limit, offset) -> list[Any]:
         query = self.fill_placeholders("query_affiliation", limit, offset)
-        sparql = SPARQLWrapper(self.wikidata_api)   # SPARQLWrapper object
+        sparql = SPARQLWrapper(self._wikidata_api)   # SPARQLWrapper object
         sparql.setReturnFormat(JSON)                # Set return format to JSON         
         sparql.setQuery(query)                      # Set the query to be executed
 
@@ -72,8 +75,8 @@ class RetrieveAffiliation:
                 try:
                     result = future.result()
                     if result:
-                        self.organisation_json_data.extend(result)
-                        logging.info(f"Processed offset {offset}, total records: {len(self.organisation_json_data)}")
+                        self._organisation_json_data.extend(result)
+                        logging.info(f"Processed offset {offset}, total records: {len(self._organisation_json_data)}")
                 except Exception as e:
                     logging.error(f"Error processing offset {offset}: {e}")
 
@@ -83,11 +86,11 @@ class RetrieveAffiliation:
         convert the retrieve json data into a dataframe
         
         """
-        n = len(self.organisation_json_data)
+        n = len(self._organisation_json_data)
         org_dict = {
-        'uri': [self.organisation_json_data[i].get('nameuri', {}).get('value', '')  for i in range(n)],
-        'org': [self.organisation_json_data[i].get('nameVar', {}).get('value', '')  for i in range(n)],
-        'countryuri': [self.organisation_json_data[i].get('countryuri', {}).get('value', '')  for i in range(n)],
+        'uri': [self._organisation_json_data[i].get('nameuri', {}).get('value', '')  for i in range(n)],
+        'org': [self._organisation_json_data[i].get('nameVar', {}).get('value', '')  for i in range(n)],
+        'countryuri': [self._organisation_json_data[i].get('countryuri', {}).get('value', '')  for i in range(n)],
         }
         self.df = pd.DataFrame(org_dict)
 
@@ -99,8 +102,8 @@ class RetrieveAffiliation:
 
         """
 
-        df = OrganisationPreprocessing(self.df)
-        self.df = df.extending_dataframe()
+        df = OrganisationPreprocessing(self._df)
+        self._df = df.extending_dataframe()
 
     def creating_database(self):
 
@@ -120,7 +123,7 @@ class RetrieveAffiliation:
         print(f"Connecting to database at: {db_path}")
 
         connection = sqlite3.connect(db_path)
-        self.df.to_sql("organisation_with_loc", connection, if_exists='replace', index=False)
+        self._df.to_sql("organisation_with_loc", connection, if_exists='replace', index=False)
         connection.execute("CREATE INDEX  IF NOT EXISTS country on organisation_with_loc (countryuri) ")
 
 

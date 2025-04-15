@@ -1,10 +1,11 @@
-from scholaridreconciler.services.scholar_scoring import FuzzyScoring
+import logging
+
+from scholaridreconciler.models.scholar import Scholar
+from scholaridreconciler.services.query_dblp import DblpSearch
 from scholaridreconciler.services.query_wikidata_directly import WikidataSearch
 from scholaridreconciler.services.scholar_affiliation import ScholarRetrieve
-from scholaridreconciler.models.scholar import Scholar          
-from scholaridreconciler.services.query_dblp import DblpSearch
+from scholaridreconciler.services.scholar_scoring import FuzzyScoring
 from scholaridreconciler.utils import ConfidenceScoring
-import logging
 
 logging.basicConfig(level=logging.INFO)
 

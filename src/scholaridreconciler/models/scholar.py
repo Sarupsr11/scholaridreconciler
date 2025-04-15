@@ -1,8 +1,6 @@
 
-from pydantic import BaseModel
-
-
-
+from pydantic import BaseModel, model_validator
+import logging
 
 class Affiliation(BaseModel):
     """
@@ -35,6 +33,9 @@ class Scholar(BaseModel):
     mathGenealogy: str | None = None
     class Config:
         extra = "allow"
+
+    
+    
     
     def identiers_present_bool(self):
         return any([self.dblp_id, self.orcid_id, self.google_scholar_id, 
@@ -42,3 +43,16 @@ class Scholar(BaseModel):
     
     def ambiguous_properties(self):
         return any([self.first_name, self.family_name, self.name,self.affiliation_raw,self.affiliation])
+
+    @model_validator(mode='after')
+    def affiliation_selection(self):
+        if self.affiliation_raw:
+            self.affiliation_raw = self.affiliation_raw
+            return self
+        elif self.affiliation:
+            self.affiliation_raw = self.affiliation.name+', '+ self.affiliation.location + ', ' + self.affiliation.country
+            return self
+        else:
+            self.affiliation_raw = None
+            return self
+        

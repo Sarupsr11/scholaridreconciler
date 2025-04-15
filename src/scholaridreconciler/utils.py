@@ -1,8 +1,9 @@
 
 import logging
 from typing import Any
+
 from rapidfuzz import process
-from scholaridreconciler.models.scholar import Scholar
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 

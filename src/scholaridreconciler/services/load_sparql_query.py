@@ -1,5 +1,7 @@
-import yaml
 import logging
+
+import yaml
+
 
 class LoadQueryIntoDict:
 
@@ -8,7 +10,7 @@ class LoadQueryIntoDict:
         Load SPARQL query from a file.
         """
         try:
-            with open(query_file, "r") as file:
+            with open(query_file) as file:
                 return yaml.safe_load(file)
         except Exception as e:
             logging.error(f"Error loading query: {e}")

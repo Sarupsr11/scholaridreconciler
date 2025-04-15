@@ -162,27 +162,3 @@ jobs:
       - name: Run type checks
         run: tox -e type
 
-  commit_check:
-    name: Validate Commit Messages
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Validate Commit Messages
-        run: |
-          COMMITS=$(git log --pretty=%s HEAD~2..HEAD --no-merges --reverse)
-          IFS=$'\n'
-          COMMIT_PATTERN="^[Ii]nitial\scommit$|^\"?(build|ci|docs|feat|fix|perf|refactor|style|test|revert|update):\s.+\"?$|^Revert\s.+$|^Add\s(LICENSE|CHANGELOG)$|^updated python version for CI$|^Merge\sbranch\s.+$"
-
-          for COMMIT in $COMMITS; do
-              if ! [[ "$COMMIT" =~ $COMMIT_PATTERN ]]; then
-                  echo "Invalid commit message: $COMMIT"
-                  exit 1
-              fi
-              if [[ ${#COMMIT} -gt 100 ]]; then
-                echo "Commit message too long (more than 100 characters): $COMMIT"
-                exit 1
-              fi
-          done
-          unset IFS

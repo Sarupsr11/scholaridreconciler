@@ -1,33 +1,30 @@
 import logging
-import pandas as pd
 from functools import wraps
-from SPARQLWrapper import JSON, SPARQLWrapper  # type:ignore
-from scholaridreconciler.models.scholar import Scholar
-from scholaridreconciler.services.organisation_check import OrganisationSearch
-from scholaridreconciler.services.api_endpoint import Endpoint
-from scholaridreconciler.services.load_sparql_query import LoadQueryIntoDict 
-from scholaridreconciler.services.affiliation_segregation import AffiliationSegregate
 
+import pandas as pd
+from SPARQLWrapper import JSON, SPARQLWrapper  # type:ignore
+
+from scholaridreconciler.models.scholar import Scholar
+from scholaridreconciler.services.affiliation_segregation import AffiliationSegregate
+from scholaridreconciler.services.api_endpoint import Endpoint
+from scholaridreconciler.services.load_sparql_query import LoadQueryIntoDict
+from scholaridreconciler.services.organisation_check import OrganisationSearch
 
 # scholar = Scholar(name="Stefan Decker", affiliation_raw="RWTH Aachen University")
 
-import logging
-import pandas as pd
-from functools import wraps
-from SPARQLWrapper import SPARQLWrapper, JSON
 
 class ScholarRetrieve:
 
     def __init__(self, scholar: Scholar):
-        self.retrieved_org = None
-        self.scholar = scholar
-        self.endpoint = Endpoint()
-        self.wikidata_api = self.endpoint.preference_wikidata()
-        self.json_data = []
-        self.df = None
+        self._retrieved_org = None
+        self._scholar = scholar
+        self._endpoint = Endpoint()
+        self._wikidata_api = self._endpoint.preference_wikidata()
+        self._json_data = []
+        self._df = None
 
     def generate_affiliation_unions(self):
-        aff_seg = AffiliationSegregate(self.scholar)
+        aff_seg = AffiliationSegregate(self._scholar)
         affiliation_parts = aff_seg.collect_each_part()
         self.union_blocks = "\n".join([
             f'''{{
@@ -40,9 +37,9 @@ class ScholarRetrieve:
     
     def collect_organisation(self):
         """Collect top organizations associated with the scholar."""
-        org = OrganisationSearch(self.scholar)
+        org = OrganisationSearch(self._scholar)
         org.selection_preference()
-        self.retrieved_org = " ".join(f"wd:{id}" for id in org.affiliation_index.keys())
+        self._retrieved_org = " ".join(f"wd:{id}" for id in org._affiliation_index)
 
     def execute_sparql_query(func):
         """
@@ -55,7 +52,7 @@ class ScholarRetrieve:
                 logging.error("SPARQL query is empty. Skipping execution.")
                 return None
 
-            sparql = SPARQLWrapper(self.wikidata_api)
+            sparql = SPARQLWrapper(self._wikidata_api)
             sparql.setReturnFormat(JSON)
             sparql.setQuery(query)
 
@@ -105,7 +102,7 @@ class ScholarRetrieve:
     @execute_sparql_query
     def extract_with_aff_approx(self):
         self.collect_organisation()
-        return self.fill_placeholders_aff(self.retrieved_org)  # Return the query
+        return self.fill_placeholders_aff(self._retrieved_org)  # Return the query
 
     @execute_sparql_query
     def extract_with_aff_exact(self):
@@ -118,31 +115,31 @@ class ScholarRetrieve:
         Collect scholar data from Wikidata.
         """
         
-        self.json_data.extend(self.extract_with_aff_exact())
-        self.json_data.extend(self.extract_with_aff_approx())
+        self._json_data.extend(self.extract_with_aff_exact())
+        self._json_data.extend(self.extract_with_aff_approx())
 
     def convert_to_dataframe(self) -> pd.DataFrame:
         """
         Convert retrieved JSON data into a Pandas DataFrame.
         """
-        n = len(self.json_data)
+        n = len(self._json_data)
         scholar_dict = {
-            'nameuri': [self.json_data[i].get('nameuri', {}).get('value', '') for i in range(n)],
-            'Label': [self.json_data[i].get('nameVar', {}).get('value', '') for i in range(n)],
-            'first_name': [self.json_data[i].get('fname', {}).get('value', '') for i in range(n)],
-            'last_name': [self.json_data[i].get('lname', {}).get('value', '') for i in range(n)],
-            'affiliation': [self.json_data[i].get('org', {}).get('value', '') for i in range(n)],
+            'nameuri': [self._json_data[i].get('nameuri', {}).get('value', '') for i in range(n)],
+            'Label': [self._json_data[i].get('nameVar', {}).get('value', '') for i in range(n)],
+            'first_name': [self._json_data[i].get('fname', {}).get('value', '') for i in range(n)],
+            'last_name': [self._json_data[i].get('lname', {}).get('value', '') for i in range(n)],
+            'affiliation': [self._json_data[i].get('org', {}).get('value', '') for i in range(n)],
         }
-        self.df = pd.DataFrame(scholar_dict)
+        self._df = pd.DataFrame(scholar_dict)
 
     def execute(self):
         self.collect_scholar_data()
         self.convert_to_dataframe()
-        return self.df
+        return self._df
 
 
-# scholar = Scholar(affiliation_raw="RWTH Aache University",name = "Stefan Decker")
-# wikidata = ScholarRetrieve(scholar)
-# print(wikidata.execute())
+scholar = Scholar(affiliation_raw="RWTH Aache University",name = "Stefan Decker")
+wikidata = ScholarRetrieve(scholar)
+print(wikidata.execute())
 
 
