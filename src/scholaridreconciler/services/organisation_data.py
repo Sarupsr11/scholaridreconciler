@@ -142,5 +142,5 @@ class RetrieveAffiliation:
 
 
 
-data = RetrieveAffiliation()
-data.execute_whole_process()
+# data = RetrieveAffiliation()
+# data.execute_whole_process()

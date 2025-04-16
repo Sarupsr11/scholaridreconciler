@@ -43,16 +43,26 @@ class Scholar(BaseModel):
                     self.wikidata_id, self.acm, self.twitter, self.github, self.gnd, self.mathGenealogy])
     
     def ambiguous_properties(self):
-        return any([self.first_name, self.family_name, self.name,self.affiliation_raw,self.affiliation])
+        amb_prop = [self.first_name, self.family_name, self.name,self.affiliation_raw]
+        number_of_amb_prop = 0
+        for prop in amb_prop:
+            if prop is not None:
+                number_of_amb_prop += 1
+        return number_of_amb_prop > 1
 
     @model_validator(mode='after')
     def affiliation_selection(self):
         if self.affiliation_raw:
             self.affiliation_raw = self.affiliation_raw
             return self
-        elif self.affiliation:
-            self.affiliation_raw = (self.affiliation.name+', '+ self.affiliation.location + ', ' 
-            + self.affiliation.country)
+        elif self.affiliation is not None:
+            if self.affiliation.name and self.affiliation:
+                self.affiliation_raw = (self.affiliation.name+', ' + ', ' 
+                + self.affiliation.country)
+            elif self.affiliation.name:
+                self.affiliation_raw = self.affiliation.name
+            else:
+                self.affiliation_raw = None
             return self
         else:
             self.affiliation_raw = None

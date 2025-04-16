@@ -134,33 +134,38 @@ class ConfidenceScoring:
             """Updates the count list with the confidence score for each scholar in the list based on IDs."""
 
             
-            if getattr(self._scholar, attr_name) is not None and getattr(self._scholar, attr_name) != '':
+            if (getattr(self._scholar, attr_name) is not None and getattr(self._scholar, attr_name) != ''
+                and  getattr(self._scholar_list[index], attr_name) is not None ):
                 for attr in getattr(self._scholar, attr_name).split(","):
-                    if attr in getattr(self._scholar_list[i], attr_name).split(","):
+                    if attr in getattr(self._scholar_list[index], attr_name).split(","):
                         self._count_list[index] += 1/total_scholar_attr
-                self._count_list[index] = self._count_list[i]/len(getattr(self._scholar_list[i], attr_name).split(","))
+                self._count_list[index] = self._count_list[index]/len(getattr(self._scholar_list[index], 
+                                                                              attr_name).split(","))
 
         def update_count_list_with_names(index,attr_name, total_scholar_attr):
             """Updates the count list with the confidence score for each scholar in the list based on names."""
 
             
-            if getattr(self._scholar, attr_name) is not None and getattr(self._scholar, attr_name) != '':
+            if (getattr(self._scholar, attr_name) is not None and getattr(self._scholar, attr_name) != ''
+                and getattr(self._scholar_list[index], attr_name) is not None and
+                  getattr(self._scholar_list[index], attr_name) != ''):
 
                 if total_scholar_attr:
                     self._count_list[index] += ((1/total_scholar_attr)*
                                         (process.extract(getattr(self._scholar, attr_name),
-                                        [getattr(self._scholar_list[i], attr_name)]
+                                        [getattr(self._scholar_list[index], attr_name)]
                                         )[0][1]/100)*(1-abs(len(getattr(self._scholar, attr_name))
-                                        -len(getattr(self._scholar_list[i], attr_name))
+                                        -len(getattr(self._scholar_list[index], attr_name))
                                         )/(len(getattr(self._scholar, attr_name))
-                                        +len(getattr(self._scholar_list[i], attr_name)))))
+                                        +len(getattr(self._scholar_list[index], attr_name)))))
                 else:
+    
                     self._count_list[index] += (process.extract(getattr(self._scholar, attr_name),
-                                    [getattr(self._scholar_list[i], attr_name)]
+                                    [getattr(self._scholar_list[index], attr_name)]
                                     )[0][1] / 100) * (1 - abs(len(getattr(self._scholar, attr_name))
-                                    - len(getattr(self._scholar_list[i], attr_name))
+                                    - len(getattr(self._scholar_list[index], attr_name))
                                     ) / (len(getattr(self._scholar, attr_name))
-                                    + len(getattr(self._scholar_list[i], attr_name))))
+                                    + len(getattr(self._scholar_list[index], attr_name))))
         
         for i in range(len(self._scholar_list)):
 
@@ -231,7 +236,7 @@ class ConfidenceScoring:
     def final_inference_update(self):
 
         def update_each_id_key(attr_name):
-
+            print(self._scholar, self._max_scholar, self._scholar_list)
             if (getattr(self._scholar, attr_name) is not None and getattr(self._max_scholar, attr_name) is not None and
                 getattr(self._scholar, attr_name) != '' and getattr(self._max_scholar, attr_name) != ''):
                 for attr in getattr(self._scholar, attr_name).split(","):

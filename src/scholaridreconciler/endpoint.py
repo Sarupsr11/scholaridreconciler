@@ -54,7 +54,7 @@ async def reconcile_scholar(scholar: Scholar):
         }
     else:
         return {
-            "message": "Not implemented yet!",
+            "message": "No scholar found!",
             "errors": [],
             "scholar": scholar
         }

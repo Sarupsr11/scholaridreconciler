@@ -64,16 +64,19 @@ class WikidataSearch:
         self._union_blocks = None
 
     def generate_affiliation_unions(self):
-        aff_seg = AffiliationSegregate(self._scholar)
-        affiliation_parts = aff_seg.collect_each_part()
-        self._union_blocks = "\n".join([
-            f'''{{
-                ?aff rdfs:label "{part}"@en.
-            }} UNION {{
-                ?aff skos:altLabel "{part}"@en.
-            }} UNION''' for part in affiliation_parts
-        ])
-        self._union_blocks += """{{ OPTIONAL{{?item wdt:P31 "{}".}} }}"""
+        if self._scholar.affiliation_raw:
+            aff_seg = AffiliationSegregate(self._scholar)
+            affiliation_parts = aff_seg.collect_each_part()
+            self._union_blocks = "\n".join([
+                f'''{{
+                    ?aff rdfs:label "{part}"@en.
+                }} UNION {{
+                    ?aff skos:altLabel "{part}"@en.
+                }} UNION''' for part in affiliation_parts
+            ])
+            self._union_blocks += """{{ OPTIONAL{{?item wdt:P31 "{}".}} }}"""
+        else:
+            self._union_blocks = ""
 
     
             
@@ -179,9 +182,9 @@ class WikidataSearch:
 
 
 
-scholar = Scholar(affiliation_raw="RWTH Aachen University, Department of Computer Science",name = "Stefan Decker")
-wikidata = WikidataSearch(scholar)
-print(wikidata.get_scholar_list())
+# scholar = Scholar(affiliation_raw="RWTH Aachen University, Department of Computer Science",name = "Stefan Decker")
+# wikidata = WikidataSearch(scholar)
+# print(wikidata.get_scholar_list())
 
 
 

@@ -63,5 +63,5 @@ class Endpoint:
 
 
       
-end = Endpoint()
-print(end.preference_wikidata())
+# end = Endpoint()
+# print(end.preference_wikidata())

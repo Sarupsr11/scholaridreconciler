@@ -4,7 +4,6 @@ import pandas as pd
 from rapidfuzz import fuzz, process
 
 from scholaridreconciler.models.scholar import Scholar
-from scholaridreconciler.services.scholar_affiliation import ScholarRetrieve
 
 
 class FuzzyScoring:
@@ -124,13 +123,13 @@ class FuzzyScoring:
 
     def return_topk(self):
         self.calculate_confidence_score()
-        return self._scholar_df.head(self.topk).to_dict(orient='records')
+        return self._scholar_df.head(self._topk).to_dict(orient='records')
 
 
-scholar = Scholar(name='Biao Huang',
-                  affiliation_raw="University of Alberta, Department of Chemical and Materials Engineering, "
-                                  "Edmonton, AB, Canada")
-sch = ScholarRetrieve(scholar)
-sch_df = sch.execute()
-fuzzy = FuzzyScoring(scholar, sch_df)
-print(fuzzy.return_topk())
+# scholar = Scholar(name='Biao Huang',
+#                   affiliation_raw="University of Alberta, Department of Chemical and Materials Engineering, "
+#                                   "Edmonton, AB, Canada")
+# sch = ScholarRetrieve(scholar)
+# sch_df = sch.execute()
+# fuzzy = FuzzyScoring(scholar, sch_df)
+# print(fuzzy.return_topk())

@@ -141,8 +141,8 @@ class ScholarRetrieve:
         return self._df
 
 
-scholar = Scholar(affiliation_raw="RWTH Aache University",name = "Stefan Decker")
-wikidata = ScholarRetrieve(scholar)
-print(wikidata.execute())
+# scholar = Scholar(affiliation_raw="RWTH Aache University",name = "Stefan Decker")
+# wikidata = ScholarRetrieve(scholar)
+# print(wikidata.execute())
 
 

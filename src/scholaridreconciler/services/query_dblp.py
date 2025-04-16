@@ -64,15 +64,18 @@ class DblpSearch:
         self._union_blocks = None
 
     def generate_affiliation_unions(self):
-        aff_seg = AffiliationSegregate(self._scholar)
-        affiliation_parts = aff_seg.collect_each_part()
-        self._union_blocks = "\n".join([
-            f'''{{
-                ?aff dblp:primaryAffiliation ?affname.
-            }} 
-            FILTER(CONTAINS(LCASE(?affname), LCASE("{part}")))
-            ''' for part in affiliation_parts
-        ])
+        if self._scholar.affiliation_raw:
+            aff_seg = AffiliationSegregate(self._scholar)
+            affiliation_parts = aff_seg.collect_each_part()
+            self._union_blocks = "\n".join([
+                f'''{{
+                    ?aff dblp:primaryAffiliation ?affname.
+                }} 
+                FILTER(CONTAINS(LCASE(?affname), LCASE("{part}")))
+                ''' for part in affiliation_parts
+            ])
+        else:
+            self._union_blocks = ""
         
 
     
@@ -158,8 +161,8 @@ class DblpSearch:
 
 
 
-scholar = Scholar(name="Stefan Decker", affiliation_raw="RWTH, Aachen, Department of Computer Science, Germany")
-dblp = DblpSearch(scholar)
-print(dblp.get_scholar_list_dblp())
+# scholar = Scholar(name="Stefan Decker", affiliation_raw="RWTH, Aachen, Department of Computer Science, Germany")
+# dblp = DblpSearch(scholar)
+# print(dblp.get_scholar_list_dblp())
 
 
